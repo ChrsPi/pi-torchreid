@@ -163,7 +163,7 @@ This project uses GitHub Actions for automated testing and linting. Every push a
 
 The repository also uses [Greptile](https://www.greptile.com/) for AI-assisted code reviews. Greptile automatically reviews pull requests when opened, or you can manually trigger a review by commenting `@greptileai` on any PR.
 
-See [.github/README.md](.github/README.md) for more details on the CI/CD setup.
+See [docs/CI_CD.md](docs/CI_CD.md) for more details on the CI/CD setup.
 
 ## Get started: 30 seconds to Torchreid
 

@@ -1,6 +1,6 @@
 # GitHub Actions CI/CD
 
-This directory contains GitHub Actions workflows for automated testing and linting.
+This document describes the GitHub Actions workflows for automated testing and linting.
 
 ## Workflows
 
@@ -60,7 +60,3 @@ act -j test
 ## Code Review
 
 This repository uses [Greptile](https://www.greptile.com/) for AI-assisted code reviews. Greptile automatically reviews pull requests when they're opened. You can also manually trigger a review by commenting `@greptileai` on any PR.
-
-## Related Documentation
-
-- [Main README](../README.md) - Project overview and usage
