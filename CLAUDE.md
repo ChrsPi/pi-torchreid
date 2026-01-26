@@ -80,9 +80,41 @@ uv run python scripts/main.py \
   test.evaluate True
 ```
 
-### Testing Cython Build
+### Testing
+
+**Run the test suite:**
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage report
+uv run pytest --cov=torchreid --cov-report=html
+
+# Run specific test file
+uv run pytest tests/test_models.py
+
+# Run with verbose output
+uv run pytest -v
+
+# Run only fast tests (exclude slow benchmarks)
+uv run pytest -m "not slow"
+```
+
+**Test suite structure:**
+- `tests/test_models.py` - Model building and forward pass tests (50+ models)
+- `tests/test_losses.py` - Loss function tests (CrossEntropyLoss, TripletLoss)
+- `tests/test_metrics.py` - Evaluation metrics tests (evaluate_rank, accuracy, distance)
+- `tests/test_transforms.py` - Data augmentation transform tests
+- `tests/test_optim.py` - Optimizer and scheduler tests
+- `tests/test_utils.py` - Utility function tests (rerank, model complexity, etc.)
+- `tests/test_data.py` - Data loading and dataset tests
+- `tests/test_cython_rank.py` - Cython ranking speed and correctness tests
+- `tests/integration/` - Integration tests (Cython equivalence)
+
+**Testing Cython Build (legacy):**
 ```bash
 uv run python torchreid/metrics/rank_cylib/test_cython.py
+# Note: This test has been moved to tests/test_cython_rank.py
 ```
 
 ### Multi-Split Results Aggregation
