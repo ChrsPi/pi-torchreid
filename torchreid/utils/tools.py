@@ -1,4 +1,3 @@
-from __future__ import division, print_function, absolute_import
 import os
 import sys
 import json
@@ -72,7 +71,7 @@ def download_url(url, dst):
         url (str): url to download file.
         dst (str): destination path.
     """
-    from six.moves import urllib
+    import urllib.request
     print('* url="{}"'.format(url))
     print('* destination="{}"'.format(dst))
 
