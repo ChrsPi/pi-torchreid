@@ -1,8 +1,7 @@
-from __future__ import division, absolute_import
 import math
 from collections import OrderedDict
+import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 
 __all__ = [
     'senet154', 'se_resnet50', 'se_resnet101', 'se_resnet152',
@@ -516,7 +515,7 @@ def init_pretrained_weights(model, model_url):
     
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
-    pretrain_dict = model_zoo.load_url(model_url)
+    pretrain_dict = torch.hub.load_state_dict_from_url(model_url)
     model_dict = model.state_dict()
     pretrain_dict = {
         k: v

@@ -1,4 +1,3 @@
-from __future__ import division, print_function, absolute_import
 
 from torchreid import metrics
 from torchreid.engine import Engine

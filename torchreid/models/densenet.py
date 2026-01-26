@@ -1,13 +1,11 @@
 """
 Code source: https://github.com/pytorch/vision
 """
-from __future__ import division, absolute_import
 import re
 from collections import OrderedDict
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from torch.utils import model_zoo
 
 __all__ = [
     'densenet121', 'densenet169', 'densenet201', 'densenet161',
@@ -264,7 +262,7 @@ def init_pretrained_weights(model, model_url):
     
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
-    pretrain_dict = model_zoo.load_url(model_url)
+    pretrain_dict = torch.hub.load_state_dict_from_url(model_url)
 
     # '.'s are no longer allowed in module names, but pervious _DenseLayer
     # has keys 'norm.1', 'relu.1', 'conv.1', 'norm.2', 'relu.2', 'conv.2'.

@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import
 import torch
 
 AVAI_SCH = ['single_step', 'multi_step', 'cosine']

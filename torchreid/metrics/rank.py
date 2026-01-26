@@ -1,4 +1,3 @@
-from __future__ import division, print_function, absolute_import
 import numpy as np
 import warnings
 from collections import defaultdict
@@ -61,7 +60,7 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
         cmc = 0.
         for repeat_idx in range(num_repeats):
-            mask = np.zeros(len(raw_cmc), dtype=np.bool)
+            mask = np.zeros(len(raw_cmc), dtype=np.bool_)
             for _, idxs in g_pids_dict.items():
                 # randomly sample one image for each gallery person
                 rnd_idx = np.random.choice(idxs)

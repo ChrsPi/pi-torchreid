@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import
 
 from .image import (
     GRID, PRID, CUHK01, CUHK02, CUHK03, MSMT17, CUHKSYSU, VIPeR, SenseReID,
