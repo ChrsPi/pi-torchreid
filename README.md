@@ -3,10 +3,10 @@
 Forked from https://github.com/KaiyangZhou/deep-person-reid.
 
 This fork is intended to:
-- update the code to be compatible with modern Python/NumPy/PyTorch
-- add a proper test suite with pytest
-- use uv for dependency management
-- use ruff for linting
+- ✅ update the code to be compatible with modern Python/NumPy/PyTorch
+- ✅ add a proper test suite with pytest (293 tests covering all major components)
+- ✅ use uv for dependency management
+- ✅ use ruff for linting
 - add hf transformers library for training and evaluation with vision transformers
 - add github actions for CI/CD
 - use agentic code assistants to help with maintenance and development
@@ -123,6 +123,37 @@ uv run ruff check . --fix
 # Format code
 uv run ruff format .
 ```
+
+### Testing
+
+This project includes a comprehensive test suite with pytest. The test suite covers models, losses, metrics, transforms, data loading, optimizers, and utilities.
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage report
+uv run pytest --cov=torchreid --cov-report=html
+
+# Run specific test file
+uv run pytest tests/test_models.py
+
+# Run specific test
+uv run pytest tests/test_models.py::TestModelBuilding::test_build_model_invalid_name
+
+# Run with verbose output
+uv run pytest -v
+
+# Run only fast tests (exclude slow benchmarks)
+uv run pytest -m "not slow"
+```
+
+The test suite includes:
+- **293 tests** covering all major components
+- Unit tests for models, losses, metrics, transforms, optimizers, and utilities
+- Integration tests for Cython/Python equivalence
+- Mock dataset utilities for testing without real data
+- Tests work on both CPU and GPU (when available)
 
 ## Get started: 30 seconds to Torchreid
 
