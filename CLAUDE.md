@@ -122,6 +122,10 @@ uv run python torchreid/metrics/rank_cylib/test_cython.py
 uv run python tools/parse_test_res.py log/eval_viper
 ```
 
+### CI/CD
+
+The repository uses GitHub Actions for automated testing and linting (see `.github/workflows/ci.yml`). All code changes are automatically validated on push/PR. The repository also uses Greptile for AI-assisted code reviews - PRs are automatically reviewed, or trigger manually with `@greptileai`.
+
 ## Architecture
 
 ### Core Package Structure (`torchreid/`)

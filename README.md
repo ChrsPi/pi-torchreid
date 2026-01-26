@@ -7,10 +7,9 @@ This fork is intended to:
 - ✅ add a proper test suite with pytest (293 tests covering all major components)
 - ✅ use uv for dependency management
 - ✅ use ruff for linting
+- ✅ add github actions for CI/CD
 - add hf transformers library for training and evaluation with vision transformers
-- add github actions for CI/CD
-- use agentic code assistants to help with maintenance and development
-- maybe add llm based code review to the github actions 
+- use agentic code assistants to help with maintenance and development 
 
 ## Old README.md:
 
@@ -154,6 +153,17 @@ The test suite includes:
 - Integration tests for Cython/Python equivalence
 - Mock dataset utilities for testing without real data
 - Tests work on both CPU and GPU (when available)
+
+### CI/CD
+
+This project uses GitHub Actions for automated testing and linting. Every push and pull request automatically runs:
+
+- **Linting**: Ruff checks for code quality and formatting
+- **Testing**: Full test suite on Python 3.10, 3.11, and 3.12
+
+The repository also uses [Greptile](https://www.greptile.com/) for AI-assisted code reviews. Greptile automatically reviews pull requests when opened, or you can manually trigger a review by commenting `@greptileai` on any PR.
+
+See [.github/README.md](.github/README.md) for more details on the CI/CD setup.
 
 ## Get started: 30 seconds to Torchreid
 

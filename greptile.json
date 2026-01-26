@@ -1,0 +1,11 @@
+{
+  "review": {
+    "autoReview": true,
+    "reviewDraftPRs": false,
+    "filters": {
+      "labels": [],
+      "branches": [],
+      "authors": []
+    }
+  }
+}
