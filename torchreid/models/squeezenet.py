@@ -1,10 +1,8 @@
 """
 Code source: https://github.com/pytorch/vision
 """
-from __future__ import division, absolute_import
 import torch
 import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
 
 __all__ = ['squeezenet1_0', 'squeezenet1_1', 'squeezenet1_0_fc512']
 
@@ -191,7 +189,7 @@ def init_pretrained_weights(model, model_url):
     
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
-    pretrain_dict = model_zoo.load_url(model_url, map_location=None)
+    pretrain_dict = torch.hub.load_state_dict_from_url(model_url, map_location=None)
     model_dict = model.state_dict()
     pretrain_dict = {
         k: v

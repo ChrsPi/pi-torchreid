@@ -1,10 +1,8 @@
 """
 Code imported from https://github.com/Cadene/pretrained-models.pytorch
 """
-from __future__ import division, absolute_import
 import torch
 import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
 
 __all__ = ['inceptionresnetv2']
 
@@ -308,7 +306,7 @@ class InceptionResNetV2(nn.Module):
 
     def load_imagenet_weights(self):
         settings = pretrained_settings['inceptionresnetv2']['imagenet']
-        pretrain_dict = model_zoo.load_url(settings['url'])
+        pretrain_dict = torch.hub.load_state_dict_from_url(settings['url'])
         model_dict = self.state_dict()
         pretrain_dict = {
             k: v

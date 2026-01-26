@@ -1,9 +1,7 @@
 """
 Code source: https://github.com/pytorch/vision
 """
-from __future__ import division, absolute_import
 import torch
-import torch.utils.model_zoo as model_zoo
 from torch import nn
 
 __all__ = [
@@ -215,7 +213,7 @@ def init_pretrained_weights(model, model_url):
             'ImageNet pretrained weights are unavailable for this model'
         )
         return
-    pretrain_dict = model_zoo.load_url(model_url)
+    pretrain_dict = torch.hub.load_state_dict_from_url(model_url)
     model_dict = model.state_dict()
     pretrain_dict = {
         k: v

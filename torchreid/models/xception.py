@@ -1,7 +1,6 @@
-from __future__ import division, absolute_import
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.utils.model_zoo as model_zoo
 
 __all__ = ['xception']
 
@@ -325,7 +324,7 @@ def init_pretrained_weights(model, model_url):
     
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
-    pretrain_dict = model_zoo.load_url(model_url)
+    pretrain_dict = torch.hub.load_state_dict_from_url(model_url)
     model_dict = model.state_dict()
     pretrain_dict = {
         k: v
