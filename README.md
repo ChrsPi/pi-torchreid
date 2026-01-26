@@ -128,6 +128,10 @@ uv run ruff format .
 This project includes a comprehensive test suite with pytest. The test suite covers models, losses, metrics, transforms, data loading, optimizers, and utilities.
 
 ```bash
+
+# Install dev dependencies
+uv sync --extra dev
+
 # Run all tests
 uv run pytest
 

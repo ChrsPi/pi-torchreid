@@ -20,21 +20,11 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install dependencies and create virtual environment
 uv sync
 
+# Install extras (e.g. for testing)
+uv sync --extra dev
+
 # Verify installation
 uv run python -c "import torchreid; print(torchreid.__version__)"
-```
-
-**Using pip (Alternative):**
-```bash
-# Create conda environment (Python 3.10+)
-conda create --name torchreid python=3.10
-conda activate torchreid
-
-# Install dependencies
-pip install -e .
-
-# Install PyTorch (adjust cudatoolkit version as needed)
-conda install pytorch torchvision cudatoolkit=11.8 -c pytorch
 ```
 
 ### Docker
