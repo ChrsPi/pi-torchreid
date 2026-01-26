@@ -1,4 +1,3 @@
-from __future__ import division, print_function, absolute_import
 import torch
 
 from torchreid.data.sampler import build_train_sampler

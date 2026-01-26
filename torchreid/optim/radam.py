@@ -10,7 +10,6 @@ Paper: https://arxiv.org/abs/1908.03265
   year={2019}
 }
 """
-from __future__ import print_function, absolute_import
 import math
 import torch
 from torch.optim.optimizer import Optimizer

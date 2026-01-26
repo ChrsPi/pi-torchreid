@@ -1,4 +1,3 @@
-from __future__ import division, absolute_import
 from torch import nn
 from torch.nn import functional as F
 

@@ -1,4 +1,3 @@
-from __future__ import division, print_function, absolute_import
 
 from .pa100k import PA100K
 
