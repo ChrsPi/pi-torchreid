@@ -143,7 +143,8 @@ class TestCountNumParam:
     def test_count_num_param_basic(self):
         """Test basic parameter counting."""
         model = build_model("resnet50", num_classes=10, loss="softmax", pretrained=False)
-        num_params = count_num_param(model)
+        with pytest.warns(UserWarning, match="deprecated"):
+            num_params = count_num_param(model)
         assert num_params > 0
         assert isinstance(num_params, (int, float))
 
@@ -151,7 +152,8 @@ class TestCountNumParam:
         """Test with different models."""
         for model_name in ["resnet18", "osnet_x1_0", "mobilenetv2_x1_0"]:
             model = build_model(model_name, num_classes=10, loss="softmax", pretrained=False)
-            num_params = count_num_param(model)
+            with pytest.warns(UserWarning, match="deprecated"):
+                num_params = count_num_param(model)
             assert num_params > 0
 
 
@@ -176,9 +178,11 @@ class TestTools:
         assert check_isfile(str(test_file)) is True
 
         # Test with non-existent file
-        assert check_isfile(str(tmp_path / "nonexistent.txt")) is False
+        with pytest.warns(UserWarning, match="No file found"):
+            assert check_isfile(str(tmp_path / "nonexistent.txt")) is False
 
         # Test with directory
         test_dir = tmp_path / "test_dir"
         test_dir.mkdir()
-        assert check_isfile(str(test_dir)) is False
+        with pytest.warns(UserWarning, match="No file found"):
+            assert check_isfile(str(test_dir)) is False

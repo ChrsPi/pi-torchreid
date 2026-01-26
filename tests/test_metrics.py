@@ -128,7 +128,6 @@ class TestAccuracy:
         assert len(acc) == 1
         assert 0 <= acc[0].item() <= 100.0
 
-    @pytest.mark.skip(reason="Known issue: accuracy function has view() bug with non-contiguous tensors in newer PyTorch")
     def test_accuracy_topk(self):
         """Test top-k accuracy."""
         outputs = torch.randn(10, 5)

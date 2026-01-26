@@ -87,12 +87,20 @@ class TestDataset:
 class TestImageDataset:
     """Test ImageDataset class."""
 
-    @pytest.mark.skip(reason="Requires actual image files or more complex mocking")
     def test_image_dataset_initialization(self, tmp_data_dir):
         """Test ImageDataset initialization with mock data."""
-        # This would require creating actual image files
-        # For now, we skip this test
-        pass
+        train, query, gallery = create_mock_image_dataset(
+            num_train=1,
+            num_query=1,
+            num_gallery=1,
+            num_pids=1,
+            num_cams=1,
+            root_dir=tmp_data_dir,
+        )
+        dataset = ImageDataset(train, query, gallery, mode="train")
+        assert len(dataset.train) == 1
+        assert len(dataset.query) == 1
+        assert len(dataset.gallery) == 1
 
     def test_image_dataset_inheritance(self):
         """Test that ImageDataset inherits from Dataset."""

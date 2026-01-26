@@ -76,14 +76,13 @@ class TestCrossEntropyLoss:
     def test_cross_entropy_loss_gradient(self, device):
         """Test gradient computation."""
         loss_fn = CrossEntropyLoss(num_classes=10, label_smooth=True, use_gpu=device.type == "cuda")
-        inputs = torch.randn(4, 10, requires_grad=True).to(device)
+        inputs = torch.randn(4, 10, device=device, requires_grad=True)
         targets = torch.tensor([0, 1, 2, 3]).to(device)
         loss = loss_fn(inputs, targets)
         loss.backward()
         # Check that gradient was computed (should exist and not be None)
-        assert hasattr(inputs, 'grad')
-        if inputs.grad is not None:
-            assert not torch.isnan(inputs.grad).any()
+        assert inputs.grad is not None
+        assert not torch.isnan(inputs.grad).any()
 
 
 class TestTripletLoss:
@@ -121,6 +120,9 @@ class TestTripletLoss:
         except (ValueError, RuntimeError):
             # Some implementations may raise error for no negatives
             pass
+        else:
+            assert torch.isfinite(loss)
+            assert loss.item() >= 0
 
     def test_triplet_loss_different_identities(self):
         """Test with all different identities."""
@@ -135,6 +137,9 @@ class TestTripletLoss:
         except (ValueError, RuntimeError):
             # Some implementations may raise error for no positives
             pass
+        else:
+            assert torch.isfinite(loss)
+            assert loss.item() >= 0
 
     def test_triplet_loss_valid_pairs(self):
         """Test with valid positive and negative pairs."""

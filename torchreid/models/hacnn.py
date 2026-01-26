@@ -101,10 +101,11 @@ class SpatialAttn(nn.Module):
         # 3-by-3 conv
         x = self.conv1(x)
         # bilinear resizing
-        x = F.upsample(
-            x, (x.size(2) * 2, x.size(3) * 2),
+        x = F.interpolate(
+            x,
+            size=(x.size(2) * 2, x.size(3) * 2),
             mode='bilinear',
-            align_corners=True
+            align_corners=True,
         )
         # scaling conv
         x = self.conv2(x)
@@ -289,8 +290,8 @@ class HACNN(nn.Module):
         x: (batch, channel, height, width)
         theta: (batch, 2, 3)
         """
-        grid = F.affine_grid(theta, x.size())
-        x = F.grid_sample(x, grid)
+        grid = F.affine_grid(theta, x.size(), align_corners=True)
+        x = F.grid_sample(x, grid, align_corners=True)
         return x
 
     def transform_theta(self, theta_i, region_idx):
@@ -320,8 +321,11 @@ class HACNN(nn.Module):
                 x1_theta_i = x1_theta[:, region_idx, :]
                 x1_theta_i = self.transform_theta(x1_theta_i, region_idx)
                 x1_trans_i = self.stn(x, x1_theta_i)
-                x1_trans_i = F.upsample(
-                    x1_trans_i, (24, 28), mode='bilinear', align_corners=True
+                x1_trans_i = F.interpolate(
+                    x1_trans_i,
+                    size=(24, 28),
+                    mode='bilinear',
+                    align_corners=True,
                 )
                 x1_local_i = self.local_conv1(x1_trans_i)
                 x1_local_list.append(x1_local_i)
@@ -339,8 +343,11 @@ class HACNN(nn.Module):
                 x2_theta_i = x2_theta[:, region_idx, :]
                 x2_theta_i = self.transform_theta(x2_theta_i, region_idx)
                 x2_trans_i = self.stn(x1_out, x2_theta_i)
-                x2_trans_i = F.upsample(
-                    x2_trans_i, (12, 14), mode='bilinear', align_corners=True
+                x2_trans_i = F.interpolate(
+                    x2_trans_i,
+                    size=(12, 14),
+                    mode='bilinear',
+                    align_corners=True,
                 )
                 x2_local_i = x2_trans_i + x1_local_list[region_idx]
                 x2_local_i = self.local_conv2(x2_local_i)
@@ -359,8 +366,11 @@ class HACNN(nn.Module):
                 x3_theta_i = x3_theta[:, region_idx, :]
                 x3_theta_i = self.transform_theta(x3_theta_i, region_idx)
                 x3_trans_i = self.stn(x2_out, x3_theta_i)
-                x3_trans_i = F.upsample(
-                    x3_trans_i, (6, 7), mode='bilinear', align_corners=True
+                x3_trans_i = F.interpolate(
+                    x3_trans_i,
+                    size=(6, 7),
+                    mode='bilinear',
+                    align_corners=True,
                 )
                 x3_local_i = x3_trans_i + x2_local_list[region_idx]
                 x3_local_i = self.local_conv3(x3_local_i)

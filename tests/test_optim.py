@@ -129,6 +129,7 @@ class TestBuildLRScheduler:
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step 10 times (should trigger decay)
         for _ in range(11):
+            dummy_optimizer.step()
             scheduler.step()
         assert dummy_optimizer.param_groups[0]["lr"] < initial_lr
 
@@ -141,6 +142,7 @@ class TestBuildLRScheduler:
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step past milestones
         for _ in range(16):
+            dummy_optimizer.step()
             scheduler.step()
         assert dummy_optimizer.param_groups[0]["lr"] < initial_lr
 
@@ -153,6 +155,7 @@ class TestBuildLRScheduler:
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step a few times
         for _ in range(5):
+            dummy_optimizer.step()
             scheduler.step()
         # LR should change (cosine annealing)
         current_lr = dummy_optimizer.param_groups[0]["lr"]
@@ -184,6 +187,7 @@ class TestBuildLRScheduler:
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step past stepsize
         for _ in range(6):
+            dummy_optimizer.step()
             scheduler.step()
         # Should decay by gamma
         expected_lr = initial_lr * 0.5
