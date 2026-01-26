@@ -12,12 +12,6 @@ This fork is intended to:
 - use agentic code assistants to help with maintenance and development
 - maybe add llm based code review to the github actions 
 
-
-
-
-
-
-
 ## Old README.md:
 
 Torchreid is a library for deep-learning person re-identification, written in [PyTorch](https://pytorch.org/) and developed for our ICCV'19 project, [Omni-Scale Feature Learning for Person Re-Identification](https://arxiv.org/abs/1905.00953).
@@ -38,7 +32,7 @@ It features:
 - visualization tools (tensorboard, ranks, etc.)
 
 
-Code: https://github.com/KaiyangZhou/deep-person-reid.
+Code: https://github.com/ChrsPi/pi-torchreid.
 
 Documentation: https://kaiyangzhou.github.io/deep-person-reid/.
 
@@ -91,8 +85,9 @@ This project uses [uv](https://github.com/astral-sh/uv) for fast dependency mana
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone https://github.com/KaiyangZhou/deep-person-reid.git
-cd deep-person-reid/
+git clone https://github.com/ChrsPi/pi-torchreid.git
+cd pi-torchreid/
+
 
 # Install dependencies and create virtual environment
 uv sync
@@ -105,20 +100,6 @@ source .venv/bin/activate  # On Linux/Mac
 
 # Verify installation
 uv run python -c "import torchreid; print(torchreid.__version__)"
-```
-
-### Using pip (Alternative)
-
-```bash
-# Create conda environment (Python 3.10+)
-conda create --name torchreid python=3.10
-conda activate torchreid
-
-# Install dependencies
-pip install -e .
-
-# Install PyTorch (adjust cudatoolkit version as needed)
-conda install pytorch torchvision cudatoolkit=11.8 -c pytorch
 ```
 
 ### Docker
