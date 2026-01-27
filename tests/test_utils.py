@@ -1,19 +1,19 @@
 """Tests for utility functions."""
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
-from pathlib import Path
-from torchreid.utils import (
-    re_ranking,
-    compute_model_complexity,
-    save_checkpoint,
-    load_checkpoint,
-    count_num_param,
-    mkdir_if_missing,
-    check_isfile,
-)
+
 from torchreid.models import build_model
+from torchreid.utils import (
+    check_isfile,
+    compute_model_complexity,
+    count_num_param,
+    load_checkpoint,
+    mkdir_if_missing,
+    re_ranking,
+    save_checkpoint,
+)
 
 
 class TestReRanking:

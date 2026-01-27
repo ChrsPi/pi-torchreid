@@ -1,5 +1,6 @@
-import numpy as np
 import os.path as osp
+
+import numpy as np
 from scipy.io import loadmat
 
 from .dataset import Dataset
@@ -16,21 +17,20 @@ class PA100K(Dataset):
             annotation/
                 annotation.mat
     """
-    dataset_dir = 'pa100k'
 
-    def __init__(self, root='', **kwargs):
+    dataset_dir = "pa100k"
+
+    def __init__(self, root="", **kwargs):
         self.root = osp.abspath(osp.expanduser(root))
         self.dataset_dir = osp.join(self.root, self.dataset_dir)
-        self.data_dir = osp.join(self.dataset_dir, 'data')
-        self.anno_mat_path = osp.join(
-            self.dataset_dir, 'annotation', 'annotation.mat'
-        )
+        self.data_dir = osp.join(self.dataset_dir, "data")
+        self.anno_mat_path = osp.join(self.dataset_dir, "annotation", "annotation.mat")
 
         required_files = [self.data_dir, self.anno_mat_path]
         self.check_before_run(required_files)
 
         train, val, test, attr_dict = self.extract_data()
-        super(PA100K, self).__init__(train, val, test, attr_dict, **kwargs)
+        super().__init__(train, val, test, attr_dict, **kwargs)
 
     def extract_data(self):
         # anno_mat is a dictionary with keys: ['test_images_name', 'val_images_name',
@@ -49,10 +49,10 @@ class PA100K(Dataset):
                 data.append((img_path, attrs))
             return data
 
-        train = _extract('train_images_name', 'train_label')
-        val = _extract('val_images_name', 'val_label')
-        test = _extract('test_images_name', 'test_label')
-        attrs = anno_mat['attributes']
+        train = _extract("train_images_name", "train_label")
+        val = _extract("val_images_name", "val_label")
+        test = _extract("test_images_name", "test_label")
+        attrs = anno_mat["attributes"]
         attr_dict = {i: str(attr[0][0]) for i, attr in enumerate(attrs)}
 
         return train, val, test, attr_dict

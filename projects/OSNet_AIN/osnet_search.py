@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 EPS = 1e-12
-NORM_AFFINE = False # enable affine transformations for normalization layer
+NORM_AFFINE = False  # enable affine transformations for normalization layer
 
 
 ##########
@@ -13,7 +13,7 @@ class IBN(nn.Module):
     """Instance + Batch Normalization."""
 
     def __init__(self, num_channels):
-        super(IBN, self).__init__()
+        super().__init__()
         half1 = int(num_channels / 2)
         self.half = half1
         half2 = num_channels - half1
@@ -30,25 +30,10 @@ class IBN(nn.Module):
 class ConvLayer(nn.Module):
     """Convolution layer (conv + bn + relu)."""
 
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        kernel_size,
-        stride=1,
-        padding=0,
-        groups=1,
-        IN=False
-    ):
-        super(ConvLayer, self).__init__()
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, groups=1, IN=False):
+        super().__init__()
         self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride=stride,
-            padding=padding,
-            bias=False,
-            groups=groups
+            in_channels, out_channels, kernel_size, stride=stride, padding=padding, bias=False, groups=groups
         )
         if IN:
             self.bn = nn.InstanceNorm2d(out_channels, affine=NORM_AFFINE)
@@ -65,19 +50,9 @@ class ConvLayer(nn.Module):
 class Conv1x1(nn.Module):
     """1x1 convolution + bn + relu."""
 
-    def __init__(
-        self, in_channels, out_channels, stride=1, groups=1, ibn=False
-    ):
-        super(Conv1x1, self).__init__()
-        self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            1,
-            stride=stride,
-            padding=0,
-            bias=False,
-            groups=groups
-        )
+    def __init__(self, in_channels, out_channels, stride=1, groups=1, ibn=False):
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, 1, stride=stride, padding=0, bias=False, groups=groups)
         if ibn:
             self.bn = IBN(out_channels)
         else:
@@ -94,10 +69,8 @@ class Conv1x1Linear(nn.Module):
     """1x1 convolution + bn (w/o non-linearity)."""
 
     def __init__(self, in_channels, out_channels, stride=1, bn=True):
-        super(Conv1x1Linear, self).__init__()
-        self.conv = nn.Conv2d(
-            in_channels, out_channels, 1, stride=stride, padding=0, bias=False
-        )
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, 1, stride=stride, padding=0, bias=False)
         self.bn = None
         if bn:
             self.bn = nn.BatchNorm2d(out_channels, affine=NORM_AFFINE)
@@ -113,16 +86,8 @@ class Conv3x3(nn.Module):
     """3x3 convolution + bn + relu."""
 
     def __init__(self, in_channels, out_channels, stride=1, groups=1):
-        super(Conv3x3, self).__init__()
-        self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            3,
-            stride=stride,
-            padding=1,
-            bias=False,
-            groups=groups
-        )
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, 3, stride=stride, padding=1, bias=False, groups=groups)
         self.bn = nn.BatchNorm2d(out_channels, affine=NORM_AFFINE)
         self.relu = nn.ReLU(inplace=True)
 
@@ -139,19 +104,9 @@ class LightConv3x3(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels):
-        super(LightConv3x3, self).__init__()
-        self.conv1 = nn.Conv2d(
-            in_channels, out_channels, 1, stride=1, padding=0, bias=False
-        )
-        self.conv2 = nn.Conv2d(
-            out_channels,
-            out_channels,
-            3,
-            stride=1,
-            padding=1,
-            bias=False,
-            groups=out_channels
-        )
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, 1, stride=1, padding=0, bias=False)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, 3, stride=1, padding=1, bias=False, groups=out_channels)
         self.bn = nn.BatchNorm2d(out_channels, affine=NORM_AFFINE)
         self.relu = nn.ReLU(inplace=True)
 
@@ -166,13 +121,11 @@ class LightConvStream(nn.Module):
     """Lightweight convolution stream."""
 
     def __init__(self, in_channels, out_channels, depth):
-        super(LightConvStream, self).__init__()
-        assert depth >= 1, 'depth must be equal to or larger than 1, but got {}'.format(
-            depth
-        )
+        super().__init__()
+        assert depth >= 1, f"depth must be equal to or larger than 1, but got {depth}"
         layers = []
         layers += [LightConv3x3(in_channels, out_channels)]
-        for i in range(depth - 1):
+        for _i in range(depth - 1):
             layers += [LightConv3x3(out_channels, out_channels)]
         self.layers = nn.Sequential(*layers)
 
@@ -187,47 +140,27 @@ class ChannelGate(nn.Module):
     """A mini-network that generates channel-wise gates conditioned on input tensor."""
 
     def __init__(
-        self,
-        in_channels,
-        num_gates=None,
-        return_gates=False,
-        gate_activation='sigmoid',
-        reduction=16,
-        layer_norm=False
+        self, in_channels, num_gates=None, return_gates=False, gate_activation="sigmoid", reduction=16, layer_norm=False
     ):
-        super(ChannelGate, self).__init__()
+        super().__init__()
         if num_gates is None:
             num_gates = in_channels
         self.return_gates = return_gates
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Conv2d(
-            in_channels,
-            in_channels // reduction,
-            kernel_size=1,
-            bias=True,
-            padding=0
-        )
+        self.fc1 = nn.Conv2d(in_channels, in_channels // reduction, kernel_size=1, bias=True, padding=0)
         self.norm1 = None
         if layer_norm:
             self.norm1 = nn.LayerNorm((in_channels // reduction, 1, 1))
         self.relu = nn.ReLU(inplace=True)
-        self.fc2 = nn.Conv2d(
-            in_channels // reduction,
-            num_gates,
-            kernel_size=1,
-            bias=True,
-            padding=0
-        )
-        if gate_activation == 'sigmoid':
+        self.fc2 = nn.Conv2d(in_channels // reduction, num_gates, kernel_size=1, bias=True, padding=0)
+        if gate_activation == "sigmoid":
             self.gate_activation = nn.Sigmoid()
-        elif gate_activation == 'relu':
+        elif gate_activation == "relu":
             self.gate_activation = nn.ReLU(inplace=True)
-        elif gate_activation == 'linear':
+        elif gate_activation == "linear":
             self.gate_activation = None
         else:
-            raise RuntimeError(
-                "Unknown gate activation: {}".format(gate_activation)
-            )
+            raise RuntimeError(f"Unknown gate activation: {gate_activation}")
 
     def forward(self, x):
         input = x
@@ -248,7 +181,7 @@ class OSBlock(nn.Module):
     """Omni-scale feature learning block."""
 
     def __init__(self, in_channels, out_channels, reduction=4, T=4, **kwargs):
-        super(OSBlock, self).__init__()
+        super().__init__()
         assert T >= 1
         assert out_channels >= reduction and out_channels % reduction == 0
         mid_channels = out_channels // reduction
@@ -281,7 +214,7 @@ class OSBlockINv1(nn.Module):
     """Omni-scale feature learning block with instance normalization."""
 
     def __init__(self, in_channels, out_channels, reduction=4, T=4, **kwargs):
-        super(OSBlockINv1, self).__init__()
+        super().__init__()
         assert T >= 1
         assert out_channels >= reduction and out_channels % reduction == 0
         mid_channels = out_channels // reduction
@@ -305,7 +238,7 @@ class OSBlockINv1(nn.Module):
             x2_t = conv2_t(x1)
             x2 = x2 + self.gate(x2_t)
         x3 = self.conv3(x2)
-        x3 = self.IN(x3) # IN inside residual
+        x3 = self.IN(x3)  # IN inside residual
         if self.downsample is not None:
             identity = self.downsample(identity)
         out = x3 + identity
@@ -316,7 +249,7 @@ class OSBlockINv2(nn.Module):
     """Omni-scale feature learning block with instance normalization."""
 
     def __init__(self, in_channels, out_channels, reduction=4, T=4, **kwargs):
-        super(OSBlockINv2, self).__init__()
+        super().__init__()
         assert T >= 1
         assert out_channels >= reduction and out_channels % reduction == 0
         mid_channels = out_channels // reduction
@@ -343,7 +276,7 @@ class OSBlockINv2(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(identity)
         out = x3 + identity
-        out = self.IN(out) # IN outside residual
+        out = self.IN(out)  # IN outside residual
         return F.relu(out)
 
 
@@ -351,7 +284,7 @@ class OSBlockINv3(nn.Module):
     """Omni-scale feature learning block with instance normalization."""
 
     def __init__(self, in_channels, out_channels, reduction=4, T=4, **kwargs):
-        super(OSBlockINv3, self).__init__()
+        super().__init__()
         assert T >= 1
         assert out_channels >= reduction and out_channels % reduction == 0
         mid_channels = out_channels // reduction
@@ -376,11 +309,11 @@ class OSBlockINv3(nn.Module):
             x2_t = conv2_t(x1)
             x2 = x2 + self.gate(x2_t)
         x3 = self.conv3(x2)
-        x3 = self.IN_in(x3) # inside residual
+        x3 = self.IN_in(x3)  # inside residual
         if self.downsample is not None:
             identity = self.downsample(identity)
         out = x3 + identity
-        out = self.IN_out(out) # IN outside residual
+        out = self.IN_out(out)  # IN outside residual
         return F.relu(out)
 
 
@@ -388,11 +321,11 @@ class NASBlock(nn.Module):
     """Neural architecture search layer."""
 
     def __init__(self, in_channels, out_channels, search_space=None):
-        super(NASBlock, self).__init__()
+        super().__init__()
         self._is_child_graph = False
         self.search_space = search_space
         if self.search_space is None:
-            raise ValueError('search_space is None')
+            raise ValueError("search_space is None")
 
         self.os_block = nn.ModuleList()
         for block in self.search_space:
@@ -401,7 +334,7 @@ class NASBlock(nn.Module):
 
     def build_child_graph(self):
         if self._is_child_graph:
-            raise RuntimeError('build_child_graph() can only be called once')
+            raise RuntimeError("build_child_graph() can only be called once")
 
         idx = self.weights.data.max(dim=0)[1].item()
         self.os_block = self.os_block[idx]
@@ -409,7 +342,7 @@ class NASBlock(nn.Module):
         self._is_child_graph = True
         return self.search_space[idx]
 
-    def forward(self, x, lmda=1.):
+    def forward(self, x, lmda=1.0):
         if self._is_child_graph:
             return self.os_block(x)
 
@@ -431,7 +364,7 @@ class NASBlock(nn.Module):
 ##########
 class OSNet(nn.Module):
     """Omni-Scale Network.
-    
+
     Reference:
         - Zhou et al. Omni-Scale Feature Learning for Person Re-Identification. ICCV, 2019.
         - Zhou et al. Learning Generalisable Omni-Scale Representations
@@ -439,17 +372,9 @@ class OSNet(nn.Module):
     """
 
     def __init__(
-        self,
-        num_classes,
-        blocks,
-        layers,
-        channels,
-        feature_dim=512,
-        loss='softmax',
-        search_space=None,
-        **kwargs
+        self, num_classes, blocks, layers, channels, feature_dim=512, loss="softmax", search_space=None, **kwargs
     ):
-        super(OSNet, self).__init__()
+        super().__init__()
         num_blocks = len(blocks)
         assert num_blocks == len(layers)
         assert num_blocks == len(channels) - 1
@@ -460,39 +385,23 @@ class OSNet(nn.Module):
         # convolutional backbone
         self.conv1 = ConvLayer(3, channels[0], 7, stride=2, padding=3, IN=True)
         self.maxpool = nn.MaxPool2d(3, stride=2, padding=1)
-        self.conv2 = self._make_layer(
-            blocks[0], layers[0], channels[0], channels[1], search_space
-        )
-        self.pool2 = nn.Sequential(
-            Conv1x1(channels[1], channels[1]), nn.AvgPool2d(2, stride=2)
-        )
-        self.conv3 = self._make_layer(
-            blocks[1], layers[1], channels[1], channels[2], search_space
-        )
-        self.pool3 = nn.Sequential(
-            Conv1x1(channels[2], channels[2]), nn.AvgPool2d(2, stride=2)
-        )
-        self.conv4 = self._make_layer(
-            blocks[2], layers[2], channels[2], channels[3], search_space
-        )
+        self.conv2 = self._make_layer(blocks[0], layers[0], channels[0], channels[1], search_space)
+        self.pool2 = nn.Sequential(Conv1x1(channels[1], channels[1]), nn.AvgPool2d(2, stride=2))
+        self.conv3 = self._make_layer(blocks[1], layers[1], channels[1], channels[2], search_space)
+        self.pool3 = nn.Sequential(Conv1x1(channels[2], channels[2]), nn.AvgPool2d(2, stride=2))
+        self.conv4 = self._make_layer(blocks[2], layers[2], channels[2], channels[3], search_space)
         self.conv5 = Conv1x1(channels[3], channels[3])
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
         # fully connected layer
-        self.fc = self._construct_fc_layer(
-            self.feature_dim, channels[3], dropout_p=None
-        )
+        self.fc = self._construct_fc_layer(self.feature_dim, channels[3], dropout_p=None)
         # identity classification layer
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
-    def _make_layer(
-        self, block, layer, in_channels, out_channels, search_space
-    ):
+    def _make_layer(self, block, layer, in_channels, out_channels, search_space):
         layers = nn.ModuleList()
         layers += [block(in_channels, out_channels, search_space=search_space)]
-        for i in range(1, layer):
-            layers += [
-                block(out_channels, out_channels, search_space=search_space)
-            ]
+        for _i in range(1, layer):
+            layers += [block(out_channels, out_channels, search_space=search_space)]
         return layers
 
     def _construct_fc_layer(self, fc_dims, input_dim, dropout_p=None):
@@ -517,16 +426,16 @@ class OSNet(nn.Module):
         return nn.Sequential(*layers)
 
     def build_child_graph(self):
-        print('Building child graph')
+        print("Building child graph")
         for i, conv in enumerate(self.conv2):
             block = conv.build_child_graph()
-            print('- conv2-{} Block={}'.format(i + 1, block.__name__))
+            print(f"- conv2-{i + 1} Block={block.__name__}")
         for i, conv in enumerate(self.conv3):
             block = conv.build_child_graph()
-            print('- conv3-{} Block={}'.format(i + 1, block.__name__))
+            print(f"- conv3-{i + 1} Block={block.__name__}")
         for i, conv in enumerate(self.conv4):
             block = conv.build_child_graph()
-            print('- conv4-{} Block={}'.format(i + 1, block.__name__))
+            print(f"- conv4-{i + 1} Block={block.__name__}")
 
     def featuremaps(self, x, lmda):
         x = self.conv1(x)
@@ -541,7 +450,7 @@ class OSNet(nn.Module):
             x = conv(x, lmda)
         return self.conv5(x)
 
-    def forward(self, x, lmda=1., return_featuremaps=False):
+    def forward(self, x, lmda=1.0, return_featuremaps=False):
         # lmda (float): temperature parameter for concrete distribution
         x = self.featuremaps(x, lmda)
         if return_featuremaps:
@@ -558,7 +467,7 @@ class OSNet(nn.Module):
 ##########
 # Instantiation
 ##########
-def osnet_nas(num_classes=1000, loss='softmax', **kwargs):
+def osnet_nas(num_classes=1000, loss="softmax", **kwargs):
     # standard size (width x1.0)
     return OSNet(
         num_classes,
@@ -567,17 +476,15 @@ def osnet_nas(num_classes=1000, loss='softmax', **kwargs):
         channels=[64, 256, 384, 512],
         loss=loss,
         search_space=[OSBlock, OSBlockINv1, OSBlockINv2, OSBlockINv3],
-        **kwargs
+        **kwargs,
     )
 
 
-__NAS_models = {'osnet_nas': osnet_nas}
+__NAS_models = {"osnet_nas": osnet_nas}
 
 
 def build_model(name, num_classes=100):
     avai_models = list(__NAS_models.keys())
     if name not in avai_models:
-        raise KeyError(
-            'Unknown model: {}. Must be one of {}'.format(name, avai_models)
-        )
+        raise KeyError(f"Unknown model: {name}. Must be one of {avai_models}")
     return __NAS_models[name](num_classes=num_classes)

@@ -1,7 +1,8 @@
 """Integration tests for Cython vs Python equivalence."""
 
-import pytest
 import numpy as np
+import pytest
+
 from torchreid import metrics
 
 
@@ -29,12 +30,8 @@ class TestCythonPythonEquivalence:
         for i in range(min(10, num_q)):
             q_pids[i] = g_pids[i % num_g]
 
-        cmc_py, mAP_py = metrics.evaluate_rank(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False
-        )
-        cmc_cy, mAP_cy = metrics.evaluate_rank(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True
-        )
+        cmc_py, mAP_py = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)
+        cmc_cy, mAP_cy = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)
 
         np.testing.assert_allclose(cmc_py, cmc_cy, rtol=1e-5, atol=1e-6)
         np.testing.assert_allclose(mAP_py, mAP_cy, rtol=1e-5, atol=1e-6)

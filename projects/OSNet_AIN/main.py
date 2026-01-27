@@ -1,22 +1,29 @@
+import argparse
 import os
+import os.path as osp
 import sys
 import time
-import os.path as osp
-import argparse
+
+from default_config import (
+    engine_run_kwargs,
+    get_default_config,
+    imagedata_kwargs,
+    lr_scheduler_kwargs,
+    optimizer_kwargs,
+)
+import osnet_search as osnet_models
+from softmax_nas import ImageSoftmaxNASEngine
 import torch
 import torch.nn as nn
 
 import torchreid
 from torchreid.utils import (
-    Logger, check_isfile, set_random_seed, collect_env_info,
-    resume_from_checkpoint, compute_model_complexity
-)
-
-import osnet_search as osnet_models
-from softmax_nas import ImageSoftmaxNASEngine
-from default_config import (
-    imagedata_kwargs, optimizer_kwargs, engine_run_kwargs, get_default_config,
-    lr_scheduler_kwargs
+    Logger,
+    check_isfile,
+    collect_env_info,
+    compute_model_complexity,
+    resume_from_checkpoint,
+    set_random_seed,
 )
 
 
@@ -32,42 +39,19 @@ def reset_config(cfg, args):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--config-file", type=str, default="", help="path to config file")
+    parser.add_argument("-s", "--sources", type=str, nargs="+", help="source datasets (delimited by space)")
+    parser.add_argument("-t", "--targets", type=str, nargs="+", help="target datasets (delimited by space)")
+    parser.add_argument("--transforms", type=str, nargs="+", help="data augmentation")
+    parser.add_argument("--root", type=str, default="", help="path to data root")
     parser.add_argument(
-        '--config-file', type=str, default='', help='path to config file'
-    )
-    parser.add_argument(
-        '-s',
-        '--sources',
+        "--gpu-devices",
         type=str,
-        nargs='+',
-        help='source datasets (delimited by space)'
+        default="",
     )
     parser.add_argument(
-        '-t',
-        '--targets',
-        type=str,
-        nargs='+',
-        help='target datasets (delimited by space)'
-    )
-    parser.add_argument(
-        '--transforms', type=str, nargs='+', help='data augmentation'
-    )
-    parser.add_argument(
-        '--root', type=str, default='', help='path to data root'
-    )
-    parser.add_argument(
-        '--gpu-devices',
-        type=str,
-        default='',
-    )
-    parser.add_argument(
-        'opts',
-        default=None,
-        nargs=argparse.REMAINDER,
-        help='Modify config options using the command-line'
+        "opts", default=None, nargs=argparse.REMAINDER, help="Modify config options using the command-line"
     )
     args = parser.parse_args()
 
@@ -81,43 +65,35 @@ def main():
 
     if cfg.use_gpu and args.gpu_devices:
         # if gpu_devices is not specified, all available gpus will be used
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
-    log_name = 'test.log' if cfg.test.evaluate else 'train.log'
-    log_name += time.strftime('-%Y-%m-%d-%H-%M-%S')
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_devices
+    log_name = "test.log" if cfg.test.evaluate else "train.log"
+    log_name += time.strftime("-%Y-%m-%d-%H-%M-%S")
     sys.stdout = Logger(osp.join(cfg.data.save_dir, log_name))
 
-    print('Show configuration\n{}\n'.format(cfg))
-    print('Collecting env info ...')
-    print('** System info **\n{}\n'.format(collect_env_info()))
+    print(f"Show configuration\n{cfg}\n")
+    print("Collecting env info ...")
+    print(f"** System info **\n{collect_env_info()}\n")
 
     if cfg.use_gpu:
         torch.backends.cudnn.benchmark = True
 
     datamanager = torchreid.data.ImageDataManager(**imagedata_kwargs(cfg))
 
-    print('Building model: {}'.format(cfg.model.name))
-    model = osnet_models.build_model(
-        cfg.model.name, num_classes=datamanager.num_train_pids
-    )
-    num_params, flops = compute_model_complexity(
-        model, (1, 3, cfg.data.height, cfg.data.width)
-    )
-    print('Model complexity: params={:,} flops={:,}'.format(num_params, flops))
+    print(f"Building model: {cfg.model.name}")
+    model = osnet_models.build_model(cfg.model.name, num_classes=datamanager.num_train_pids)
+    num_params, flops = compute_model_complexity(model, (1, 3, cfg.data.height, cfg.data.width))
+    print(f"Model complexity: params={num_params:,} flops={flops:,}")
 
     if cfg.use_gpu:
         model = nn.DataParallel(model).cuda()
 
     optimizer = torchreid.optim.build_optimizer(model, **optimizer_kwargs(cfg))
-    scheduler = torchreid.optim.build_lr_scheduler(
-        optimizer, **lr_scheduler_kwargs(cfg)
-    )
+    scheduler = torchreid.optim.build_lr_scheduler(optimizer, **lr_scheduler_kwargs(cfg))
 
     if cfg.model.resume and check_isfile(cfg.model.resume):
-        cfg.train.start_epoch = resume_from_checkpoint(
-            cfg.model.resume, model, optimizer=optimizer
-        )
+        cfg.train.start_epoch = resume_from_checkpoint(cfg.model.resume, model, optimizer=optimizer)
 
-    print('Building NAS engine')
+    print("Building NAS engine")
     engine = ImageSoftmaxNASEngine(
         datamanager,
         model,
@@ -130,16 +106,16 @@ def main():
         min_lmda=cfg.nas.min_lmda,
         lmda_decay_step=cfg.nas.lmda_decay_step,
         lmda_decay_rate=cfg.nas.lmda_decay_rate,
-        fixed_lmda=cfg.nas.fixed_lmda
+        fixed_lmda=cfg.nas.fixed_lmda,
     )
     engine.run(**engine_run_kwargs(cfg))
 
-    print('*** Display the found architecture ***')
+    print("*** Display the found architecture ***")
     if cfg.use_gpu:
         model.module.build_child_graph()
     else:
         model.build_child_graph()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -2,12 +2,12 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-__all__ = ['MuDeep']
+__all__ = ["MuDeep"]
 
 
 class ConvBlock(nn.Module):
     """Basic convolutional block.
-    
+
     convolution + batch normalization + relu.
 
     Args:
@@ -19,7 +19,7 @@ class ConvBlock(nn.Module):
     """
 
     def __init__(self, in_c, out_c, k, s, p):
-        super(ConvBlock, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(in_c, out_c, k, stride=s, padding=p)
         self.bn = nn.BatchNorm2d(out_c)
 
@@ -31,7 +31,7 @@ class ConvLayers(nn.Module):
     """Preprocessing layers."""
 
     def __init__(self):
-        super(ConvLayers, self).__init__()
+        super().__init__()
         self.conv1 = ConvBlock(3, 48, k=3, s=1, p=1)
         self.conv2 = ConvBlock(48, 96, k=3, s=1, p=1)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -47,7 +47,7 @@ class MultiScaleA(nn.Module):
     """Multi-scale stream layer A (Sec.3.1)"""
 
     def __init__(self):
-        super(MultiScaleA, self).__init__()
+        super().__init__()
         self.stream1 = nn.Sequential(
             ConvBlock(96, 96, k=1, s=1, p=0),
             ConvBlock(96, 24, k=3, s=1, p=1),
@@ -76,7 +76,7 @@ class Reduction(nn.Module):
     """Reduction layer (Sec.3.1)"""
 
     def __init__(self):
-        super(Reduction, self).__init__()
+        super().__init__()
         self.stream1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.stream2 = ConvBlock(96, 96, k=3, s=2, p=1)
         self.stream3 = nn.Sequential(
@@ -97,7 +97,7 @@ class MultiScaleB(nn.Module):
     """Multi-scale stream layer B (Sec.3.1)"""
 
     def __init__(self):
-        super(MultiScaleB, self).__init__()
+        super().__init__()
         self.stream1 = nn.Sequential(
             nn.AvgPool2d(kernel_size=3, stride=1, padding=1),
             ConvBlock(256, 256, k=1, s=1, p=0),
@@ -128,7 +128,7 @@ class Fusion(nn.Module):
     """Saliency-based learning fusion layer (Sec.3.2)"""
 
     def __init__(self):
-        super(Fusion, self).__init__()
+        super().__init__()
         self.a1 = nn.Parameter(torch.rand(1, 256, 1, 1))
         self.a2 = nn.Parameter(torch.rand(1, 256, 1, 1))
         self.a3 = nn.Parameter(torch.rand(1, 256, 1, 1))
@@ -158,8 +158,8 @@ class MuDeep(nn.Module):
         - ``mudeep``: Multiscale deep neural network.
     """
 
-    def __init__(self, num_classes, loss='softmax', **kwargs):
-        super(MuDeep, self).__init__()
+    def __init__(self, num_classes, loss="softmax", **kwargs):
+        super().__init__()
         self.loss = loss
 
         self.block1 = ConvLayers()
@@ -197,9 +197,9 @@ class MuDeep(nn.Module):
         if not self.training:
             return x
 
-        if self.loss == 'softmax':
+        if self.loss == "softmax":
             return y
-        elif self.loss == 'triplet':
+        elif self.loss == "triplet":
             return y, x
         else:
-            raise KeyError('Unsupported loss: {}'.format(self.loss))
+            raise KeyError(f"Unsupported loss: {self.loss}")

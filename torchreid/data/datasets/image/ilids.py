@@ -1,8 +1,8 @@
+from collections import defaultdict
 import copy
 import glob
-import random
 import os.path as osp
-from collections import defaultdict
+import random
 
 from torchreid.utils import read_json, write_json
 
@@ -14,22 +14,23 @@ class iLIDS(ImageDataset):
 
     Reference:
         Zheng et al. Associating Groups of People. BMVC 2009.
-    
+
     Dataset statistics:
         - identities: 119.
         - images: 476.
         - cameras: 8 (not explicitly provided).
     """
-    dataset_dir = 'ilids'
-    dataset_url = 'http://www.eecs.qmul.ac.uk/~jason/data/i-LIDS_Pedestrian.tgz'
 
-    def __init__(self, root='', split_id=0, **kwargs):
+    dataset_dir = "ilids"
+    dataset_url = "http://www.eecs.qmul.ac.uk/~jason/data/i-LIDS_Pedestrian.tgz"
+
+    def __init__(self, root="", split_id=0, **kwargs):
         self.root = osp.abspath(osp.expanduser(root))
         self.dataset_dir = osp.join(self.root, self.dataset_dir)
         self.download_dataset(self.dataset_dir, self.dataset_url)
 
-        self.data_dir = osp.join(self.dataset_dir, 'i-LIDS_Pedestrian/Persons')
-        self.split_path = osp.join(self.dataset_dir, 'splits.json')
+        self.data_dir = osp.join(self.dataset_dir, "i-LIDS_Pedestrian/Persons")
+        self.split_path = osp.join(self.dataset_dir, "splits.json")
 
         required_files = [self.dataset_dir, self.data_dir]
         self.check_before_run(required_files)
@@ -38,25 +39,22 @@ class iLIDS(ImageDataset):
         splits = read_json(self.split_path)
         if split_id >= len(splits):
             raise ValueError(
-                'split_id exceeds range, received {}, but '
-                'expected between 0 and {}'.format(split_id,
-                                                   len(splits) - 1)
+                f"split_id exceeds range, received {split_id}, but expected between 0 and {len(splits) - 1}"
             )
         split = splits[split_id]
 
         train, query, gallery = self.process_split(split)
 
-        super(iLIDS, self).__init__(train, query, gallery, **kwargs)
+        super().__init__(train, query, gallery, **kwargs)
 
     def prepare_split(self):
         if not osp.exists(self.split_path):
-            print('Creating splits ...')
+            print("Creating splits ...")
 
-            paths = glob.glob(osp.join(self.data_dir, '*.jpg'))
+            paths = glob.glob(osp.join(self.data_dir, "*.jpg"))
             img_names = [osp.basename(path) for path in paths]
             num_imgs = len(img_names)
-            assert num_imgs == 476, 'There should be 476 images, but ' \
-                                    'got {}, please check the data'.format(num_imgs)
+            assert num_imgs == 476, f"There should be 476 images, but got {num_imgs}, please check the data"
 
             # store image names
             # image naming format:
@@ -68,8 +66,7 @@ class iLIDS(ImageDataset):
                 pid_dict[pid].append(img_name)
             pids = list(pid_dict.keys())
             num_pids = len(pids)
-            assert num_pids == 119, 'There should be 119 identities, ' \
-                                    'but got {}, please check the data'.format(num_pids)
+            assert num_pids == 119, f"There should be 119 identities, but got {num_pids}, please check the data"
 
             num_train_pids = int(num_pids * 0.5)
 
@@ -98,12 +95,12 @@ class iLIDS(ImageDataset):
                     query.append(samples[0])
                     gallery.append(samples[1])
 
-                split = {'train': train, 'query': query, 'gallery': gallery}
+                split = {"train": train, "query": query, "gallery": gallery}
                 splits.append(split)
 
-            print('Totally {} splits are created'.format(len(splits)))
+            print(f"Totally {len(splits)} splits are created")
             write_json(splits, self.split_path)
-            print('Split file is saved to {}'.format(self.split_path))
+            print(f"Split file is saved to {self.split_path}")
 
     def get_pid2label(self, img_names):
         pid_container = set()
@@ -120,15 +117,15 @@ class iLIDS(ImageDataset):
             pid = int(img_name[:4])
             if pid2label is not None:
                 pid = pid2label[pid]
-            camid = int(img_name[4:7]) - 1 # 0-based
+            camid = int(img_name[4:7]) - 1  # 0-based
             img_path = osp.join(self.data_dir, img_name)
             data.append((img_path, pid, camid))
 
         return data
 
     def process_split(self, split):
-        train_pid2label = self.get_pid2label(split['train'])
-        train = self.parse_img_names(split['train'], train_pid2label)
-        query = self.parse_img_names(split['query'])
-        gallery = self.parse_img_names(split['gallery'])
+        train_pid2label = self.get_pid2label(split["train"])
+        train = self.parse_img_names(split["train"], train_pid2label)
+        query = self.parse_img_names(split["query"])
+        gallery = self.parse_img_names(split["gallery"])
         return train, query, gallery

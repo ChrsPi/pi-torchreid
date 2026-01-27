@@ -1,13 +1,13 @@
 """Tests for data transforms."""
 
+from PIL import Image
 import pytest
 import torch
-import numpy as np
-from PIL import Image
+
 from torchreid.data.transforms import (
+    ColorAugmentation,
     Random2DTranslation,
     RandomErasing,
-    ColorAugmentation,
     RandomPatch,
     build_transforms,
 )
@@ -30,6 +30,7 @@ class TestRandom2DTranslation:
         img = Image.new("RGB", (100, 200))
         # Set random seed for deterministic test
         import random
+
         random.seed(42)
         result = transform(img)
         assert result.size == (128, 256)
@@ -60,6 +61,7 @@ class TestRandomErasing:
         img = torch.randn(3, 256, 128)
         original = img.clone()
         import random
+
         random.seed(42)
         result = transform(img)
         # May or may not be equal due to randomness, but shape should match
@@ -127,6 +129,7 @@ class TestRandomPatch:
             transform(img)
         # With prob_happen=0.0, should return original
         import random
+
         random.seed(42)
         result = transform(img)
         assert result.size == img.size
@@ -167,9 +170,7 @@ class TestBuildTransforms:
 
     def test_build_transforms_custom_norm(self):
         """Test with custom normalization."""
-        transform_tr, transform_te = build_transforms(
-            256, 128, norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5]
-        )
+        transform_tr, transform_te = build_transforms(256, 128, norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5])
         assert transform_tr is not None
         assert transform_te is not None
 
@@ -195,9 +196,7 @@ class TestBuildTransforms:
 
     def test_build_transforms_train_vs_test(self):
         """Test that train and test transforms are different."""
-        transform_tr, transform_te = build_transforms(
-            256, 128, transforms=["random_flip", "random_erase"]
-        )
+        transform_tr, transform_te = build_transforms(256, 128, transforms=["random_flip", "random_erase"])
         # They should be different objects
         assert transform_tr is not transform_te
 
@@ -212,6 +211,7 @@ class TestBuildTransforms:
 
         # Train transform (with randomness)
         import random
+
         random.seed(42)
         result_tr = transform_tr(img)
         assert isinstance(result_tr, torch.Tensor)

@@ -2,7 +2,8 @@
 
 import pytest
 import torch
-from torchreid.losses import CrossEntropyLoss, TripletLoss, DeepSupervision
+
+from torchreid.losses import CrossEntropyLoss, DeepSupervision, TripletLoss
 
 
 class TestCrossEntropyLoss:
@@ -10,7 +11,7 @@ class TestCrossEntropyLoss:
 
     def test_cross_entropy_loss_basic(self, device):
         """Test basic forward pass with valid inputs."""
-        loss_fn = CrossEntropyLoss(num_classes=10, label_smooth=True, use_gpu=device.type == "cuda")
+        loss_fn = CrossEntropyLoss(num_classes=11, label_smooth=True, use_gpu=device.type == "cuda")
         inputs = torch.randn(4, 10).to(device)
         targets = torch.tensor([0, 1, 2, 3]).to(device)
         loss = loss_fn(inputs, targets)

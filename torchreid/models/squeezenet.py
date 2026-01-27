@@ -1,44 +1,33 @@
 """
 Code source: https://github.com/pytorch/vision
 """
+
 import torch
 import torch.nn as nn
 
-__all__ = ['squeezenet1_0', 'squeezenet1_1', 'squeezenet1_0_fc512']
+__all__ = ["squeezenet1_0", "squeezenet1_1", "squeezenet1_0_fc512"]
 
 model_urls = {
-    'squeezenet1_0':
-    'https://download.pytorch.org/models/squeezenet1_0-a815701f.pth',
-    'squeezenet1_1':
-    'https://download.pytorch.org/models/squeezenet1_1-f364aa15.pth',
+    "squeezenet1_0": "https://download.pytorch.org/models/squeezenet1_0-a815701f.pth",
+    "squeezenet1_1": "https://download.pytorch.org/models/squeezenet1_1-f364aa15.pth",
 }
 
 
 class Fire(nn.Module):
-
-    def __init__(
-        self, inplanes, squeeze_planes, expand1x1_planes, expand3x3_planes
-    ):
-        super(Fire, self).__init__()
+    def __init__(self, inplanes, squeeze_planes, expand1x1_planes, expand3x3_planes):
+        super().__init__()
         self.inplanes = inplanes
         self.squeeze = nn.Conv2d(inplanes, squeeze_planes, kernel_size=1)
         self.squeeze_activation = nn.ReLU(inplace=True)
-        self.expand1x1 = nn.Conv2d(
-            squeeze_planes, expand1x1_planes, kernel_size=1
-        )
+        self.expand1x1 = nn.Conv2d(squeeze_planes, expand1x1_planes, kernel_size=1)
         self.expand1x1_activation = nn.ReLU(inplace=True)
-        self.expand3x3 = nn.Conv2d(
-            squeeze_planes, expand3x3_planes, kernel_size=3, padding=1
-        )
+        self.expand3x3 = nn.Conv2d(squeeze_planes, expand3x3_planes, kernel_size=3, padding=1)
         self.expand3x3_activation = nn.ReLU(inplace=True)
 
     def forward(self, x):
         x = self.squeeze_activation(self.squeeze(x))
         return torch.cat(
-            [
-                self.expand1x1_activation(self.expand1x1(x)),
-                self.expand3x3_activation(self.expand3x3(x))
-            ], 1
+            [self.expand1x1_activation(self.expand1x1(x)), self.expand3x3_activation(self.expand3x3(x))], 1
         )
 
 
@@ -55,24 +44,13 @@ class SqueezeNet(nn.Module):
         - ``squeezenet1_0_fc512``: SqueezeNet (version=1.0) + FC.
     """
 
-    def __init__(
-        self,
-        num_classes,
-        loss,
-        version=1.0,
-        fc_dims=None,
-        dropout_p=None,
-        **kwargs
-    ):
-        super(SqueezeNet, self).__init__()
+    def __init__(self, num_classes, loss, version=1.0, fc_dims=None, dropout_p=None, **kwargs):
+        super().__init__()
         self.loss = loss
         self.feature_dim = 512
 
         if version not in [1.0, 1.1]:
-            raise ValueError(
-                'Unsupported SqueezeNet version {version}:'
-                '1.0 or 1.1 expected'.format(version=version)
-            )
+            raise ValueError(f"Unsupported SqueezeNet version {version}:1.0 or 1.1 expected")
 
         if version == 1.0:
             self.features = nn.Sequential(
@@ -125,11 +103,7 @@ class SqueezeNet(nn.Module):
             self.feature_dim = input_dim
             return None
 
-        assert isinstance(
-            fc_dims, (list, tuple)
-        ), 'fc_dims must be either list or tuple, but got {}'.format(
-            type(fc_dims)
-        )
+        assert isinstance(fc_dims, (list, tuple)), f"fc_dims must be either list or tuple, but got {type(fc_dims)}"
 
         layers = []
         for dim in fc_dims:
@@ -147,15 +121,10 @@ class SqueezeNet(nn.Module):
     def _init_params(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(
-                    m.weight, mode='fan_out', nonlinearity='relu'
-                )
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm1d):
+            elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
@@ -176,59 +145,42 @@ class SqueezeNet(nn.Module):
 
         y = self.classifier(v)
 
-        if self.loss == 'softmax':
+        if self.loss == "softmax":
             return y
-        elif self.loss == 'triplet':
+        elif self.loss == "triplet":
             return y, v
         else:
-            raise KeyError('Unsupported loss: {}'.format(self.loss))
+            raise KeyError(f"Unsupported loss: {self.loss}")
 
 
 def init_pretrained_weights(model, model_url):
     """Initializes model with pretrained weights.
-    
+
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
     pretrain_dict = torch.hub.load_state_dict_from_url(model_url, map_location=None)
     model_dict = model.state_dict()
-    pretrain_dict = {
-        k: v
-        for k, v in pretrain_dict.items()
-        if k in model_dict and model_dict[k].size() == v.size()
-    }
+    pretrain_dict = {k: v for k, v in pretrain_dict.items() if k in model_dict and model_dict[k].size() == v.size()}
     model_dict.update(pretrain_dict)
     model.load_state_dict(model_dict)
 
 
-def squeezenet1_0(num_classes, loss='softmax', pretrained=True, **kwargs):
-    model = SqueezeNet(
-        num_classes, loss, version=1.0, fc_dims=None, dropout_p=None, **kwargs
-    )
+def squeezenet1_0(num_classes, loss="softmax", pretrained=True, **kwargs):
+    model = SqueezeNet(num_classes, loss, version=1.0, fc_dims=None, dropout_p=None, **kwargs)
     if pretrained:
-        init_pretrained_weights(model, model_urls['squeezenet1_0'])
+        init_pretrained_weights(model, model_urls["squeezenet1_0"])
     return model
 
 
-def squeezenet1_0_fc512(
-    num_classes, loss='softmax', pretrained=True, **kwargs
-):
-    model = SqueezeNet(
-        num_classes,
-        loss,
-        version=1.0,
-        fc_dims=[512],
-        dropout_p=None,
-        **kwargs
-    )
+def squeezenet1_0_fc512(num_classes, loss="softmax", pretrained=True, **kwargs):
+    model = SqueezeNet(num_classes, loss, version=1.0, fc_dims=[512], dropout_p=None, **kwargs)
     if pretrained:
-        init_pretrained_weights(model, model_urls['squeezenet1_0'])
+        init_pretrained_weights(model, model_urls["squeezenet1_0"])
     return model
 
 
-def squeezenet1_1(num_classes, loss='softmax', pretrained=True, **kwargs):
-    model = SqueezeNet(
-        num_classes, loss, version=1.1, fc_dims=None, dropout_p=None, **kwargs
-    )
+def squeezenet1_1(num_classes, loss="softmax", pretrained=True, **kwargs):
+    model = SqueezeNet(num_classes, loss, version=1.1, fc_dims=None, dropout_p=None, **kwargs)
     if pretrained:
-        init_pretrained_weights(model, model_urls['squeezenet1_1'])
+        init_pretrained_weights(model, model_urls["squeezenet1_1"])
     return model

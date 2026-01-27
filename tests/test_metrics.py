@@ -1,8 +1,9 @@
 """Tests for evaluation metrics."""
 
-import pytest
 import numpy as np
+import pytest
 import torch
+
 from torchreid import metrics
 
 
@@ -18,9 +19,7 @@ class TestEvaluateRank:
         q_camids = np.array([0, 0, 0])
         g_camids = np.array([1, 1, 1])  # Different cameras
 
-        cmc, mAP = metrics.evaluate_rank(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank=5, use_cython=False
-        )
+        cmc, mAP = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=5, use_cython=False)
         assert cmc[0] == 1.0  # Rank-1 should be perfect
         assert mAP == 1.0
         # max_rank might be adjusted to gallery size if smaller
@@ -42,9 +41,7 @@ class TestEvaluateRank:
         for i in range(min(5, num_q)):
             q_pids[i] = g_pids[i % num_g]
 
-        cmc, mAP = metrics.evaluate_rank(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10, use_cython=False
-        )
+        cmc, mAP = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10, use_cython=False)
         assert len(cmc) == 10
         assert 0 <= mAP <= 1.0
         assert all(0 <= x <= 1.0 for x in cmc)
@@ -110,9 +107,7 @@ class TestEvaluateRank:
         q_camids = np.array([0, 0, 0, 1, 1])
         g_camids = np.array([1, 1, 1])
 
-        cmc, mAP = metrics.evaluate_rank(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10, use_cython=False
-        )
+        cmc, mAP = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10, use_cython=False)
         # Should adjust max_rank to gallery size
         assert len(cmc) <= num_g
 

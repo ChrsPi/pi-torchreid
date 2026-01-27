@@ -1,10 +1,10 @@
 """Tests for data loading and datasets."""
 
 import pytest
-import torch
+
+from tests.fixtures.mock_datasets import create_mock_image_dataset
 from torchreid.data.datasets import Dataset, ImageDataset
 from torchreid.data.sampler import build_train_sampler
-from tests.fixtures.mock_datasets import create_mock_image_dataset
 
 
 class TestDataset:
@@ -132,9 +132,7 @@ class TestSamplers:
             ("path4.jpg", 1, 0, 0),
         ]
 
-        sampler = build_train_sampler(
-            data_source, train_sampler="RandomIdentitySampler", batch_size=4, num_instances=2
-        )
+        sampler = build_train_sampler(data_source, train_sampler="RandomIdentitySampler", batch_size=4, num_instances=2)
         assert sampler is not None
 
     def test_build_train_sampler_invalid(self):

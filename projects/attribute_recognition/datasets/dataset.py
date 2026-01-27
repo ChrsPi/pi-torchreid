@@ -3,19 +3,8 @@ import os.path as osp
 from torchreid.utils import read_image
 
 
-class Dataset(object):
-
-    def __init__(
-        self,
-        train,
-        val,
-        test,
-        attr_dict,
-        transform=None,
-        mode='train',
-        verbose=True,
-        **kwargs
-    ):
+class Dataset:
+    def __init__(self, train, val, test, attr_dict, transform=None, mode="train", verbose=True, **kwargs):
         self.train = train
         self.val = val
         self.test = test
@@ -23,9 +12,9 @@ class Dataset(object):
         self._num_attrs = len(self.attr_dict)
         self.transform = transform
 
-        if mode == 'train':
+        if mode == "train":
             self.data = self.train
-        elif mode == 'val':
+        elif mode == "val":
             self.data = self.val
         else:
             self.data = self.test
@@ -61,7 +50,7 @@ class Dataset(object):
 
         for fpath in required_files:
             if not osp.exists(fpath):
-                raise RuntimeError('"{}" is not found'.format(fpath))
+                raise RuntimeError(f'"{fpath}" is not found')
 
     def show_summary(self):
         num_train = len(self.train)
@@ -69,18 +58,18 @@ class Dataset(object):
         num_test = len(self.test)
         num_total = num_train + num_val + num_test
 
-        print('=> Loaded {}'.format(self.__class__.__name__))
+        print(f"=> Loaded {self.__class__.__name__}")
         print("  ------------------------------")
         print("  subset   | # images")
         print("  ------------------------------")
-        print("  train    | {:8d}".format(num_train))
-        print("  val      | {:8d}".format(num_val))
-        print("  test     | {:8d}".format(num_test))
+        print(f"  train    | {num_train:8d}")
+        print(f"  val      | {num_val:8d}")
+        print(f"  test     | {num_test:8d}")
         print("  ------------------------------")
-        print("  total    | {:8d}".format(num_total))
+        print(f"  total    | {num_total:8d}")
         print("  ------------------------------")
-        print("  # attributes: {}".format(len(self.attr_dict)))
+        print(f"  # attributes: {len(self.attr_dict)}")
         print("  attributes:")
         for label, attr in self.attr_dict.items():
-            print('    {:3d}: {}'.format(label, attr))
+            print(f"    {label:3d}: {attr}")
         print("  ------------------------------")

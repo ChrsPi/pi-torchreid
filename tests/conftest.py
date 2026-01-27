@@ -1,12 +1,13 @@
 """Pytest fixtures and shared utilities for torchreid tests."""
 
+from pathlib import Path
+import random
+import shutil
+import tempfile
+
+import numpy as np
 import pytest
 import torch
-import numpy as np
-import random
-import tempfile
-import shutil
-from pathlib import Path
 
 
 @pytest.fixture
