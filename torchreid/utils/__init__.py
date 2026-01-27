@@ -5,5 +5,6 @@ from .reidtools import *
 from .rerank import re_ranking
 from .tools import *
 from .torchtools import *
+
 # FeatureExtractor imports from torchreid.utils; must load after .tools and .torchtools
 from .feature_extractor import FeatureExtractor
