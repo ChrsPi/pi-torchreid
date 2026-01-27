@@ -1,15 +1,13 @@
 import numpy as np
+from PIL import Image
 import torch
 import torchvision.transforms as T
-from PIL import Image
 
-from torchreid.utils import (
-    check_isfile, load_pretrained_weights, compute_model_complexity
-)
 from torchreid.models import build_model
+from torchreid.utils import check_isfile, compute_model_complexity, load_pretrained_weights
 
 
-class FeatureExtractor(object):
+class FeatureExtractor:
     """A simple API for feature extraction.
 
     FeatureExtractor can be used like a python function, which
@@ -57,31 +55,33 @@ class FeatureExtractor(object):
 
     def __init__(
         self,
-        model_name='',
-        model_path='',
+        model_name="",
+        model_path="",
         image_size=(256, 128),
-        pixel_mean=[0.485, 0.456, 0.406],
-        pixel_std=[0.229, 0.224, 0.225],
+        pixel_mean=None,
+        pixel_std=None,
         pixel_norm=True,
-        device='cuda',
-        verbose=True
+        device="cuda",
+        verbose=True,
     ):
         # Build model
+        if pixel_std is None:
+            pixel_std = [0.229, 0.224, 0.225]
+        if pixel_mean is None:
+            pixel_mean = [0.485, 0.456, 0.406]
         model = build_model(
             model_name,
             num_classes=1,
             pretrained=not (model_path and check_isfile(model_path)),
-            use_gpu=device.startswith('cuda')
+            use_gpu=device.startswith("cuda"),
         )
         model.eval()
 
         if verbose:
-            num_params, flops = compute_model_complexity(
-                model, (1, 3, image_size[0], image_size[1])
-            )
-            print('Model: {}'.format(model_name))
-            print('- params: {:,}'.format(num_params))
-            print('- flops: {:,}'.format(flops))
+            num_params, flops = compute_model_complexity(model, (1, 3, image_size[0], image_size[1]))
+            print(f"Model: {model_name}")
+            print(f"- params: {num_params:,}")
+            print(f"- flops: {flops:,}")
 
         if model_path and check_isfile(model_path):
             load_pretrained_weights(model, model_path)
@@ -111,15 +111,13 @@ class FeatureExtractor(object):
 
             for element in input:
                 if isinstance(element, str):
-                    image = Image.open(element).convert('RGB')
+                    image = Image.open(element).convert("RGB")
 
                 elif isinstance(element, np.ndarray):
                     image = self.to_pil(element)
 
                 else:
-                    raise TypeError(
-                        'Type of each element must belong to [str | numpy.ndarray]'
-                    )
+                    raise TypeError("Type of each element must belong to [str | numpy.ndarray]")
 
                 image = self.preprocess(image)
                 images.append(image)
@@ -128,7 +126,7 @@ class FeatureExtractor(object):
             images = images.to(self.device)
 
         elif isinstance(input, str):
-            image = Image.open(input).convert('RGB')
+            image = Image.open(input).convert("RGB")
             image = self.preprocess(image)
             images = image.unsqueeze(0).to(self.device)
 

@@ -1,14 +1,13 @@
+from collections import deque
 import math
 import random
-from collections import deque
-import torch
+
 from PIL import Image
-from torchvision.transforms import (
-    Resize, Compose, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip
-)
+import torch
+from torchvision.transforms import ColorJitter, Compose, Normalize, RandomHorizontalFlip, Resize, ToTensor
 
 
-class Random2DTranslation(object):
+class Random2DTranslation:
     """Randomly translates the input image with a probability.
 
     Specifically, given a predefined shape (height, width), the input is first
@@ -34,20 +33,17 @@ class Random2DTranslation(object):
         if random.uniform(0, 1) > self.p:
             return img.resize((self.width, self.height), self.interpolation)
 
-        new_width, new_height = int(round(self.width * 1.125)
-                                    ), int(round(self.height * 1.125))
+        new_width, new_height = int(round(self.width * 1.125)), int(round(self.height * 1.125))
         resized_img = img.resize((new_width, new_height), self.interpolation)
         x_maxrange = new_width - self.width
         y_maxrange = new_height - self.height
         x1 = int(round(random.uniform(0, x_maxrange)))
         y1 = int(round(random.uniform(0, y_maxrange)))
-        croped_img = resized_img.crop(
-            (x1, y1, x1 + self.width, y1 + self.height)
-        )
+        croped_img = resized_img.crop((x1, y1, x1 + self.width, y1 + self.height))
         return croped_img
 
 
-class RandomErasing(object):
+class RandomErasing:
     """Randomly erases an image patch.
 
     Origin: `<https://github.com/zhunzhong07/Random-Erasing>`_
@@ -64,14 +60,9 @@ class RandomErasing(object):
         mean (list, optional): erasing value.
     """
 
-    def __init__(
-        self,
-        probability=0.5,
-        sl=0.02,
-        sh=0.4,
-        r1=0.3,
-        mean=[0.4914, 0.4822, 0.4465]
-    ):
+    def __init__(self, probability=0.5, sl=0.02, sh=0.4, r1=0.3, mean=None):
+        if mean is None:
+            mean = [0.4914, 0.4822, 0.4465]
         self.probability = probability
         self.mean = mean
         self.sl = sl
@@ -82,7 +73,7 @@ class RandomErasing(object):
         if random.uniform(0, 1) > self.probability:
             return img
 
-        for attempt in range(100):
+        for _attempt in range(100):
             area = img.size()[1] * img.size()[2]
 
             target_area = random.uniform(self.sl, self.sh) * area
@@ -95,17 +86,17 @@ class RandomErasing(object):
                 x1 = random.randint(0, img.size()[1] - h)
                 y1 = random.randint(0, img.size()[2] - w)
                 if img.size()[0] == 3:
-                    img[0, x1:x1 + h, y1:y1 + w] = self.mean[0]
-                    img[1, x1:x1 + h, y1:y1 + w] = self.mean[1]
-                    img[2, x1:x1 + h, y1:y1 + w] = self.mean[2]
+                    img[0, x1 : x1 + h, y1 : y1 + w] = self.mean[0]
+                    img[1, x1 : x1 + h, y1 : y1 + w] = self.mean[1]
+                    img[2, x1 : x1 + h, y1 : y1 + w] = self.mean[2]
                 else:
-                    img[0, x1:x1 + h, y1:y1 + w] = self.mean[0]
+                    img[0, x1 : x1 + h, y1 : y1 + w] = self.mean[0]
                 return img
 
         return img
 
 
-class ColorAugmentation(object):
+class ColorAugmentation:
     """Randomly alters the intensities of RGB channels.
 
     Reference:
@@ -140,11 +131,11 @@ class ColorAugmentation(object):
         return tensor
 
 
-class RandomPatch(object):
+class RandomPatch:
     """Random patch data augmentation.
 
     There is a patch pool that stores randomly extracted pathces from person images.
-    
+
     For each input image, RandomPatch
         1) extracts a random patch and stores the patch in the patch pool;
         2) randomly selects a patch from the patch pool and pastes it on the
@@ -181,13 +172,9 @@ class RandomPatch(object):
 
     def generate_wh(self, W, H):
         area = W * H
-        for attempt in range(100):
-            target_area = random.uniform(
-                self.patch_min_area, self.patch_max_area
-            ) * area
-            aspect_ratio = random.uniform(
-                self.patch_min_ratio, 1. / self.patch_min_ratio
-            )
+        for _attempt in range(100):
+            target_area = random.uniform(self.patch_min_area, self.patch_max_area) * area
+            aspect_ratio = random.uniform(self.patch_min_ratio, 1.0 / self.patch_min_ratio)
             h = int(round(math.sqrt(target_area * aspect_ratio)))
             w = int(round(math.sqrt(target_area / aspect_ratio)))
             if w < W and h < H:
@@ -202,7 +189,7 @@ class RandomPatch(object):
         return patch
 
     def __call__(self, img):
-        W, H = img.size # original image size
+        W, H = img.size  # original image size
 
         # collect new patch
         w, h = self.generate_wh(W, H)
@@ -229,14 +216,7 @@ class RandomPatch(object):
         return img
 
 
-def build_transforms(
-    height,
-    width,
-    transforms='random_flip',
-    norm_mean=[0.485, 0.456, 0.406],
-    norm_std=[0.229, 0.224, 0.225],
-    **kwargs
-):
+def build_transforms(height, width, transforms="random_flip", norm_mean=None, norm_std=None, **kwargs):
     """Builds train and test transform functions.
 
     Args:
@@ -248,6 +228,10 @@ def build_transforms(
         norm_std (list or None, optional): normalization standard deviation values. Default is
             ImageNet standard deviation values.
     """
+    if norm_std is None:
+        norm_std = [0.229, 0.224, 0.225]
+    if norm_mean is None:
+        norm_mean = [0.485, 0.456, 0.406]
     if transforms is None:
         transforms = []
 
@@ -255,71 +239,64 @@ def build_transforms(
         transforms = [transforms]
 
     if not isinstance(transforms, list):
-        raise ValueError(
-            'transforms must be a list of strings, but found to be {}'.format(
-                type(transforms)
-            )
-        )
+        raise ValueError(f"transforms must be a list of strings, but found to be {type(transforms)}")
 
     if len(transforms) > 0:
         transforms = [t.lower() for t in transforms]
 
     if norm_mean is None or norm_std is None:
-        norm_mean = [0.485, 0.456, 0.406] # imagenet mean
-        norm_std = [0.229, 0.224, 0.225] # imagenet std
+        norm_mean = [0.485, 0.456, 0.406]  # imagenet mean
+        norm_std = [0.229, 0.224, 0.225]  # imagenet std
     normalize = Normalize(mean=norm_mean, std=norm_std)
 
-    print('Building train transforms ...')
+    print("Building train transforms ...")
     transform_tr = []
 
-    print('+ resize to {}x{}'.format(height, width))
+    print(f"+ resize to {height}x{width}")
     transform_tr += [Resize((height, width))]
 
-    if 'random_flip' in transforms:
-        print('+ random flip')
+    if "random_flip" in transforms:
+        print("+ random flip")
         transform_tr += [RandomHorizontalFlip()]
 
-    if 'random_crop' in transforms:
+    if "random_crop" in transforms:
         print(
-            '+ random crop (enlarge to {}x{} and '
-            'crop {}x{})'.format(
-                int(round(height * 1.125)), int(round(width * 1.125)), height,
-                width
-            )
+            f"+ random crop (enlarge to {int(round(height * 1.125))}x{int(round(width * 1.125))} and "
+            f"crop {height}x{width})"
         )
         transform_tr += [Random2DTranslation(height, width)]
 
-    if 'random_patch' in transforms:
-        print('+ random patch')
+    if "random_patch" in transforms:
+        print("+ random patch")
         transform_tr += [RandomPatch()]
 
-    if 'color_jitter' in transforms:
-        print('+ color jitter')
-        transform_tr += [
-            ColorJitter(brightness=0.2, contrast=0.15, saturation=0, hue=0)
-        ]
+    if "color_jitter" in transforms:
+        print("+ color jitter")
+        transform_tr += [ColorJitter(brightness=0.2, contrast=0.15, saturation=0, hue=0)]
 
-    print('+ to torch tensor of range [0, 1]')
+    print("+ to torch tensor of range [0, 1]")
     transform_tr += [ToTensor()]
 
-    print('+ normalization (mean={}, std={})'.format(norm_mean, norm_std))
+    print(f"+ normalization (mean={norm_mean}, std={norm_std})")
     transform_tr += [normalize]
 
-    if 'random_erase' in transforms:
-        print('+ random erase')
+    if "random_erase" in transforms:
+        print("+ random erase")
         transform_tr += [RandomErasing(mean=norm_mean)]
 
     transform_tr = Compose(transform_tr)
 
-    print('Building test transforms ...')
-    print('+ resize to {}x{}'.format(height, width))
-    print('+ to torch tensor of range [0, 1]')
-    print('+ normalization (mean={}, std={})'.format(norm_mean, norm_std))
+    print("Building test transforms ...")
+    print(f"+ resize to {height}x{width}")
+    print("+ to torch tensor of range [0, 1]")
+    print(f"+ normalization (mean={norm_mean}, std={norm_std})")
 
-    transform_te = Compose([
-        Resize((height, width)),
-        ToTensor(),
-        normalize,
-    ])
+    transform_te = Compose(
+        [
+            Resize((height, width)),
+            ToTensor(),
+            normalize,
+        ]
+    )
 
     return transform_tr, transform_te

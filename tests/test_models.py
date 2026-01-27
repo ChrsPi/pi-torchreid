@@ -2,6 +2,7 @@
 
 import pytest
 import torch
+
 from torchreid import models
 
 # Get all available models
@@ -115,9 +116,7 @@ class TestModelBuilding:
     @pytest.mark.parametrize("loss", ["softmax", "triplet"])
     def test_build_model_loss_modes(self, loss):
         """Test building models with different loss modes."""
-        model = models.build_model(
-            name="resnet50", num_classes=10, loss=loss, pretrained=False
-        )
+        model = models.build_model(name="resnet50", num_classes=10, loss=loss, pretrained=False)
         assert model is not None
         assert hasattr(model, "loss")
         assert model.loss == loss
@@ -127,9 +126,7 @@ class TestModelBuilding:
         """Test building models with and without pretrained weights."""
         if pretrained:
             pytest.skip("Pretrained weights require network access.")
-        model = models.build_model(
-            name="resnet50", num_classes=10, loss="softmax", pretrained=pretrained
-        )
+        model = models.build_model(name="resnet50", num_classes=10, loss="softmax", pretrained=pretrained)
         assert model is not None
 
     @pytest.mark.parametrize("use_gpu", [True, False])
@@ -280,9 +277,7 @@ class TestModelProperties:
         )
         model2.load_state_dict(torch.load(checkpoint_path))
         # Verify parameters match
-        for (name1, param1), (name2, param2) in zip(
-            model1.named_parameters(), model2.named_parameters()
-        ):
+        for (name1, param1), (name2, param2) in zip(model1.named_parameters(), model2.named_parameters(), strict=False):
             assert name1 == name2
             assert torch.equal(param1, param2)
 
@@ -298,10 +293,7 @@ class TestModelProperties:
                 use_gpu=False,
             ).eval()
             # Test forward pass to verify output shape
-            if model_name == "hacnn":
-                dummy_input = torch.randn(2, 3, 160, 64)
-            else:
-                dummy_input = torch.randn(2, 3, 256, 128)
+            dummy_input = torch.randn(2, 3, 160, 64) if model_name == "hacnn" else torch.randn(2, 3, 256, 128)
             with torch.no_grad():
                 out = model(dummy_input)
                 if isinstance(out, tuple):

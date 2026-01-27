@@ -2,19 +2,17 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-__all__ = ['shufflenet']
+__all__ = ["shufflenet"]
 
 model_urls = {
     # training epoch = 90, top1 = 61.8
-    'imagenet':
-    'https://mega.nz/#!RDpUlQCY!tr_5xBEkelzDjveIYBBcGcovNCOrgfiJO9kiidz9fZM',
+    "imagenet": "https://mega.nz/#!RDpUlQCY!tr_5xBEkelzDjveIYBBcGcovNCOrgfiJO9kiidz9fZM",
 }
 
 
 class ChannelShuffle(nn.Module):
-
     def __init__(self, num_groups):
-        super(ChannelShuffle, self).__init__()
+        super().__init__()
         self.g = num_groups
 
     def forward(self, x):
@@ -30,45 +28,21 @@ class ChannelShuffle(nn.Module):
 
 
 class Bottleneck(nn.Module):
-
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        stride,
-        num_groups,
-        group_conv1x1=True
-    ):
-        super(Bottleneck, self).__init__()
-        assert stride in [1, 2], 'Warning: stride must be either 1 or 2'
+    def __init__(self, in_channels, out_channels, stride, num_groups, group_conv1x1=True):
+        super().__init__()
+        assert stride in [1, 2], "Warning: stride must be either 1 or 2"
         self.stride = stride
         mid_channels = out_channels // 4
         if stride == 2:
             out_channels -= in_channels
         # group conv is not applied to first conv1x1 at stage 2
         num_groups_conv1x1 = num_groups if group_conv1x1 else 1
-        self.conv1 = nn.Conv2d(
-            in_channels,
-            mid_channels,
-            1,
-            groups=num_groups_conv1x1,
-            bias=False
-        )
+        self.conv1 = nn.Conv2d(in_channels, mid_channels, 1, groups=num_groups_conv1x1, bias=False)
         self.bn1 = nn.BatchNorm2d(mid_channels)
         self.shuffle1 = ChannelShuffle(num_groups)
-        self.conv2 = nn.Conv2d(
-            mid_channels,
-            mid_channels,
-            3,
-            stride=stride,
-            padding=1,
-            groups=mid_channels,
-            bias=False
-        )
+        self.conv2 = nn.Conv2d(mid_channels, mid_channels, 3, stride=stride, padding=1, groups=mid_channels, bias=False)
         self.bn2 = nn.BatchNorm2d(mid_channels)
-        self.conv3 = nn.Conv2d(
-            mid_channels, out_channels, 1, groups=num_groups, bias=False
-        )
+        self.conv3 = nn.Conv2d(mid_channels, out_channels, 1, groups=num_groups, bias=False)
         self.bn3 = nn.BatchNorm2d(out_channels)
         if stride == 2:
             self.shortcut = nn.AvgPool2d(3, stride=2, padding=1)
@@ -107,8 +81,8 @@ class ShuffleNet(nn.Module):
         - ``shufflenet``: ShuffleNet (groups=3).
     """
 
-    def __init__(self, num_classes, loss='softmax', num_groups=3, **kwargs):
-        super(ShuffleNet, self).__init__()
+    def __init__(self, num_classes, loss="softmax", num_groups=3, **kwargs):
+        super().__init__()
         self.loss = loss
 
         self.conv1 = nn.Sequential(
@@ -119,9 +93,7 @@ class ShuffleNet(nn.Module):
         )
 
         self.stage2 = nn.Sequential(
-            Bottleneck(
-                24, cfg[num_groups][0], 2, num_groups, group_conv1x1=False
-            ),
+            Bottleneck(24, cfg[num_groups][0], 2, num_groups, group_conv1x1=False),
             Bottleneck(cfg[num_groups][0], cfg[num_groups][0], 1, num_groups),
             Bottleneck(cfg[num_groups][0], cfg[num_groups][0], 1, num_groups),
             Bottleneck(cfg[num_groups][0], cfg[num_groups][0], 1, num_groups),
@@ -160,37 +132,34 @@ class ShuffleNet(nn.Module):
 
         y = self.classifier(x)
 
-        if self.loss == 'softmax':
+        if self.loss == "softmax":
             return y
-        elif self.loss == 'triplet':
+        elif self.loss == "triplet":
             return y, x
         else:
-            raise KeyError('Unsupported loss: {}'.format(self.loss))
+            raise KeyError(f"Unsupported loss: {self.loss}")
 
 
 def init_pretrained_weights(model, model_url):
     """Initializes model with pretrained weights.
-    
+
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
     pretrain_dict = torch.hub.load_state_dict_from_url(model_url)
     model_dict = model.state_dict()
-    pretrain_dict = {
-        k: v
-        for k, v in pretrain_dict.items()
-        if k in model_dict and model_dict[k].size() == v.size()
-    }
+    pretrain_dict = {k: v for k, v in pretrain_dict.items() if k in model_dict and model_dict[k].size() == v.size()}
     model_dict.update(pretrain_dict)
     model.load_state_dict(model_dict)
 
 
-def shufflenet(num_classes, loss='softmax', pretrained=True, **kwargs):
+def shufflenet(num_classes, loss="softmax", pretrained=True, **kwargs):
     model = ShuffleNet(num_classes, loss, **kwargs)
     if pretrained:
         # init_pretrained_weights(model, model_urls['imagenet'])
         import warnings
+
         warnings.warn(
-            'The imagenet pretrained weights need to be manually downloaded from {}'
-            .format(model_urls['imagenet'])
+            "The imagenet pretrained weights need to be manually downloaded from {}".format(model_urls["imagenet"]),
+            stacklevel=2,
         )
     return model

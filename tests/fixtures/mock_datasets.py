@@ -1,10 +1,10 @@
 """Mock dataset utilities for testing without real data."""
 
+from pathlib import Path
+import tempfile
+
 import numpy as np
 from PIL import Image
-import os
-import tempfile
-from pathlib import Path
 
 
 def create_mock_image(width=128, height=256, channels=3):

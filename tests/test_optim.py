@@ -3,7 +3,8 @@
 import pytest
 import torch
 import torch.nn as nn
-from torchreid.optim import build_optimizer, build_lr_scheduler
+
+from torchreid.optim import build_lr_scheduler, build_optimizer
 
 
 class TestBuildOptimizer:
@@ -40,6 +41,7 @@ class TestBuildOptimizer:
 
     def test_build_optimizer_staged_lr(self, dummy_model):
         """Test staged learning rates."""
+
         # Create model with named layers
         class TestModel(nn.Module):
             def __init__(self):
@@ -70,6 +72,7 @@ class TestBuildOptimizer:
 
     def test_build_optimizer_staged_lr_multiple_layers(self, dummy_model):
         """Test staged learning rates with multiple new layers."""
+
         class TestModel(nn.Module):
             def __init__(self):
                 super().__init__()
@@ -103,9 +106,7 @@ class TestBuildOptimizer:
 
     def test_build_optimizer_sgd_momentum(self, dummy_model):
         """Test SGD with momentum."""
-        optimizer = build_optimizer(
-            dummy_model, optim="sgd", lr=0.01, momentum=0.9, sgd_nesterov=True
-        )
+        optimizer = build_optimizer(dummy_model, optim="sgd", lr=0.01, momentum=0.9, sgd_nesterov=True)
         param_group = optimizer.param_groups[0]
         assert param_group["momentum"] == 0.9
         assert param_group["nesterov"] is True
@@ -122,9 +123,7 @@ class TestBuildLRScheduler:
 
     def test_build_lr_scheduler_single_step(self, dummy_optimizer):
         """Test single step scheduler."""
-        scheduler = build_lr_scheduler(
-            dummy_optimizer, lr_scheduler="single_step", stepsize=10, gamma=0.1
-        )
+        scheduler = build_lr_scheduler(dummy_optimizer, lr_scheduler="single_step", stepsize=10, gamma=0.1)
         assert scheduler is not None
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step 10 times (should trigger decay)
@@ -135,9 +134,7 @@ class TestBuildLRScheduler:
 
     def test_build_lr_scheduler_multi_step(self, dummy_optimizer):
         """Test multi step scheduler."""
-        scheduler = build_lr_scheduler(
-            dummy_optimizer, lr_scheduler="multi_step", stepsize=[5, 10, 15], gamma=0.1
-        )
+        scheduler = build_lr_scheduler(dummy_optimizer, lr_scheduler="multi_step", stepsize=[5, 10, 15], gamma=0.1)
         assert scheduler is not None
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step past milestones
@@ -148,9 +145,7 @@ class TestBuildLRScheduler:
 
     def test_build_lr_scheduler_cosine(self, dummy_optimizer):
         """Test cosine annealing scheduler."""
-        scheduler = build_lr_scheduler(
-            dummy_optimizer, lr_scheduler="cosine", max_epoch=10
-        )
+        scheduler = build_lr_scheduler(dummy_optimizer, lr_scheduler="cosine", max_epoch=10)
         assert scheduler is not None
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step a few times
@@ -169,9 +164,7 @@ class TestBuildLRScheduler:
     def test_build_lr_scheduler_single_step_type_error(self, dummy_optimizer):
         """Test type error for single_step with list."""
         # Should convert list to last element
-        scheduler = build_lr_scheduler(
-            dummy_optimizer, lr_scheduler="single_step", stepsize=[10, 20]
-        )
+        scheduler = build_lr_scheduler(dummy_optimizer, lr_scheduler="single_step", stepsize=[10, 20])
         assert scheduler is not None
 
     def test_build_lr_scheduler_multi_step_type_error(self, dummy_optimizer):
@@ -181,9 +174,7 @@ class TestBuildLRScheduler:
 
     def test_build_lr_scheduler_gamma(self, dummy_optimizer):
         """Test gamma parameter."""
-        scheduler = build_lr_scheduler(
-            dummy_optimizer, lr_scheduler="single_step", stepsize=5, gamma=0.5
-        )
+        scheduler = build_lr_scheduler(dummy_optimizer, lr_scheduler="single_step", stepsize=5, gamma=0.5)
         initial_lr = dummy_optimizer.param_groups[0]["lr"]
         # Step past stepsize
         for _ in range(6):

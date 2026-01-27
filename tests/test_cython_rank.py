@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+
 from torchreid import metrics
 
 
@@ -29,12 +30,8 @@ def test_cython_rank_precision():
         q_pids[i] = g_pids[i % num_g]
 
     # Test Market1501 metric
-    cmc_py, mAP_py = metrics.evaluate_rank(
-        distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False
-    )
-    cmc_cy, mAP_cy = metrics.evaluate_rank(
-        distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True
-    )
+    cmc_py, mAP_py = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)
+    cmc_cy, mAP_cy = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)
 
     np.testing.assert_allclose(cmc_py, cmc_cy, rtol=1e-5, atol=1e-6)
     np.testing.assert_allclose(mAP_py, mAP_cy, rtol=1e-5, atol=1e-6)
@@ -78,36 +75,30 @@ def test_cython_rank_speed():
     num_g = 300
     max_rank = 5
 
-    setup = """
+    setup = f"""
 import numpy as np
 from torchreid import metrics
 np.random.seed(42)
-distmat = np.random.rand({}, {}).astype(np.float32) * 20
-q_pids = np.random.randint(0, {}, size={})
-g_pids = np.random.randint(0, {}, size={})
-q_camids = np.random.randint(0, 5, size={})
-g_camids = np.random.randint(0, 5, size={})
+distmat = np.random.rand({num_q}, {num_g}).astype(np.float32) * 20
+q_pids = np.random.randint(0, {num_q}, size={num_q})
+g_pids = np.random.randint(0, {num_g}, size={num_g})
+q_camids = np.random.randint(0, 5, size={num_q})
+g_camids = np.random.randint(0, 5, size={num_g})
 # Ensure matches
-for i in range(min(10, {})):
-    q_pids[i] = g_pids[i % {}]
-""".format(
-        num_q, num_g, num_q, num_q, num_g, num_g, num_q, num_g, num_q, num_g
-    )
+for i in range(min(10, {num_q})):
+    q_pids[i] = g_pids[i % {num_g}]
+"""
 
     # Benchmark Python version
     pytime = timeit.timeit(
-        "metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, {}, use_cython=False)".format(
-            max_rank
-        ),
+        f"metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, {max_rank}, use_cython=False)",
         setup=setup,
         number=20,
     )
 
     # Benchmark Cython version
     cytime = timeit.timeit(
-        "metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, {}, use_cython=True)".format(
-            max_rank
-        ),
+        f"metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, {max_rank}, use_cython=True)",
         setup=setup,
         number=20,
     )

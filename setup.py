@@ -1,11 +1,11 @@
-from setuptools import setup, Extension
 from Cython.Build import cythonize
 import numpy as np
+from setuptools import Extension, setup
 
 ext_modules = [
     Extension(
-        'torchreid.metrics.rank_cylib.rank_cy',
-        ['torchreid/metrics/rank_cylib/rank_cy.pyx'],
+        "torchreid.metrics.rank_cylib.rank_cy",
+        ["torchreid/metrics/rank_cylib/rank_cy.pyx"],
         include_dirs=[np.get_include()],
     )
 ]

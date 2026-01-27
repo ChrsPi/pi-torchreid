@@ -1,4 +1,3 @@
-
 from torchreid import metrics
 from torchreid.losses import CrossEntropyLoss
 
@@ -18,7 +17,7 @@ class ImageSoftmaxEngine(Engine):
         label_smooth (bool, optional): use label smoothing regularizer. Default is True.
 
     Examples::
-        
+
         import torchreid
         datamanager = torchreid.data.ImageDataManager(
             root='path/to/reid-data',
@@ -52,26 +51,16 @@ class ImageSoftmaxEngine(Engine):
         )
     """
 
-    def __init__(
-        self,
-        datamanager,
-        model,
-        optimizer,
-        scheduler=None,
-        use_gpu=True,
-        label_smooth=True
-    ):
-        super(ImageSoftmaxEngine, self).__init__(datamanager, use_gpu)
+    def __init__(self, datamanager, model, optimizer, scheduler=None, use_gpu=True, label_smooth=True):
+        super().__init__(datamanager, use_gpu)
 
         self.model = model
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.register_model('model', model, optimizer, scheduler)
+        self.register_model("model", model, optimizer, scheduler)
 
         self.criterion = CrossEntropyLoss(
-            num_classes=self.datamanager.num_train_pids,
-            use_gpu=self.use_gpu,
-            label_smooth=label_smooth
+            num_classes=self.datamanager.num_train_pids, use_gpu=self.use_gpu, label_smooth=label_smooth
         )
 
     def forward_backward(self, data):
@@ -88,9 +77,6 @@ class ImageSoftmaxEngine(Engine):
         loss.backward()
         self.optimizer.step()
 
-        loss_summary = {
-            'loss': loss.item(),
-            'acc': metrics.accuracy(outputs, pids)[0].item()
-        }
+        loss_summary = {"loss": loss.item(), "acc": metrics.accuracy(outputs, pids)[0].item()}
 
         return loss_summary
