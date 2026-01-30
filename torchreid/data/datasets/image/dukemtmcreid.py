@@ -53,7 +53,8 @@ class DukeMTMCreID(ImageDataset):
         data = []
         for img_path in img_paths:
             pid, camid = map(int, pattern.search(img_path).groups())
-            assert 1 <= camid <= 8
+            if not (1 <= camid <= 8):
+                raise RuntimeError(f"camid must be between 1 and 8, got {camid}")
             camid -= 1  # index starts from 0
             if relabel:
                 pid = pid2label[pid]

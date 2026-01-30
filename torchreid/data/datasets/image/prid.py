@@ -1,7 +1,7 @@
 import os.path as osp
 import random
 
-from torchreid.utils import read_json, write_json
+from torchreid.utils import logger, read_json, write_json
 
 from ..dataset import ImageDataset
 
@@ -52,7 +52,7 @@ class PRID(ImageDataset):
 
     def prepare_split(self):
         if not osp.exists(self.split_path):
-            print("Creating splits ...")
+            logger.info("Creating splits ...")
 
             splits = []
             for _ in range(10):
@@ -65,9 +65,9 @@ class PRID(ImageDataset):
                 split = {"train": train_pids, "test": test_pids}
                 splits.append(split)
 
-            print(f"Totally {len(splits)} splits are created")
+            logger.info("Totally %s splits are created", len(splits))
             write_json(splits, self.split_path)
-            print(f"Split file is saved to {self.split_path}")
+            logger.info("Split file is saved to %s", self.split_path)
 
     def process_split(self, split):
         train_pids = split["train"]

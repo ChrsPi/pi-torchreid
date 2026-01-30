@@ -4,6 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from torchreid.utils.logging_config import logger
+
 __all__ = ["osnet_ain_x1_0", "osnet_ain_x0_75", "osnet_ain_x0_5", "osnet_ain_x0_25"]
 
 pretrained_urls = {
@@ -109,7 +111,8 @@ class LightConvStream(nn.Module):
 
     def __init__(self, in_channels, out_channels, depth):
         super().__init__()
-        assert depth >= 1, f"depth must be equal to or larger than 1, but got {depth}"
+        if depth < 1:
+            raise ValueError(f"depth must be equal to or larger than 1, but got {depth}")
         layers = []
         layers += [LightConv3x3(in_channels, out_channels)]
         for _i in range(depth - 1):
@@ -169,8 +172,10 @@ class OSBlock(nn.Module):
 
     def __init__(self, in_channels, out_channels, reduction=4, T=4, **kwargs):
         super().__init__()
-        assert T >= 1
-        assert out_channels >= reduction and out_channels % reduction == 0
+        if T < 1:
+            raise ValueError("T must be >= 1")
+        if out_channels < reduction or out_channels % reduction != 0:
+            raise ValueError("out_channels must be >= reduction and divisible by reduction")
         mid_channels = out_channels // reduction
 
         self.conv1 = Conv1x1(in_channels, mid_channels)
@@ -202,8 +207,10 @@ class OSBlockINin(nn.Module):
 
     def __init__(self, in_channels, out_channels, reduction=4, T=4, **kwargs):
         super().__init__()
-        assert T >= 1
-        assert out_channels >= reduction and out_channels % reduction == 0
+        if T < 1:
+            raise ValueError("T must be >= 1")
+        if out_channels < reduction or out_channels % reduction != 0:
+            raise ValueError("out_channels must be >= reduction and divisible by reduction")
         mid_channels = out_channels // reduction
 
         self.conv1 = Conv1x1(in_channels, mid_channels)
@@ -249,8 +256,10 @@ class OSNet(nn.Module):
     ):
         super().__init__()
         num_blocks = len(blocks)
-        assert num_blocks == len(layers)
-        assert num_blocks == len(channels) - 1
+        if num_blocks != len(layers):
+            raise ValueError("num_blocks must match the length of layers")
+        if num_blocks != len(channels) - 1:
+            raise ValueError("num_blocks must be len(channels) - 1")
         self.loss = loss
         self.feature_dim = feature_dim
 
@@ -408,9 +417,12 @@ def init_pretrained_weights(model, key=""):
             stacklevel=2,
         )
     else:
-        print(f'Successfully loaded imagenet pretrained weights from "{cached_file}"')
+        logger.info('Successfully loaded imagenet pretrained weights from "%s"', cached_file)
         if len(discarded_layers) > 0:
-            print(f"** The following layers are discarded due to unmatched keys or layer size: {discarded_layers}")
+            logger.info(
+                "** The following layers are discarded due to unmatched keys or layer size: %s",
+                discarded_layers,
+            )
 
 
 ##########

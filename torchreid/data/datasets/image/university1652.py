@@ -4,6 +4,8 @@ import os.path as osp
 
 import gdown
 
+from torchreid.utils.logging_config import logger
+
 from ..dataset import ImageDataset
 
 
@@ -53,7 +55,7 @@ class University1652(ImageDataset):
     def __init__(self, root="", **kwargs):
         self.root = osp.abspath(osp.expanduser(root))
         self.dataset_dir = osp.join(self.root, self.dataset_dir)
-        print(self.dataset_dir)
+        logger.info("%s", self.dataset_dir)
         if not os.path.isdir(self.dataset_dir):
             os.mkdir(self.dataset_dir)
             gdown.download(self.dataset_url, self.dataset_dir + "data.zip", quiet=False)

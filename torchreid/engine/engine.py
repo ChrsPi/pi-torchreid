@@ -1,7 +1,9 @@
 from collections import OrderedDict
+from collections.abc import Sequence
 import datetime
 import os.path as osp
 import time
+from typing import Any
 
 import numpy as np
 import torch
@@ -13,6 +15,7 @@ from torchreid.losses import DeepSupervision
 from torchreid.utils import (
     AverageMeter,
     MetricMeter,
+    logger,
     open_all_layers,
     open_specified_layers,
     re_ranking,
@@ -30,11 +33,12 @@ class Engine:
         use_gpu (bool, optional): use gpu. Default is True.
     """
 
-    def __init__(self, datamanager, use_gpu=True):
+    def __init__(self, datamanager: Any, use_gpu: bool = True) -> None:
         self.datamanager = datamanager
         self.train_loader = self.datamanager.train_loader
         self.test_loader = self.datamanager.test_loader
         self.use_gpu = torch.cuda.is_available() and use_gpu
+        self.device = torch.device("cuda" if self.use_gpu else "cpu")
         self.writer = None
         self.epoch = 0
 
@@ -46,7 +50,13 @@ class Engine:
         self._optims = OrderedDict()
         self._scheds = OrderedDict()
 
-    def register_model(self, name="model", model=None, optim=None, sched=None):
+    def register_model(
+        self,
+        name: str = "model",
+        model: torch.nn.Module | None = None,
+        optim: torch.optim.Optimizer | None = None,
+        sched: torch.optim.lr_scheduler._LRScheduler | None = None,
+    ) -> None:
         if self.__dict__.get("_models") is None:
             raise AttributeError("Cannot assign model before super().__init__() call")
 
@@ -60,18 +70,19 @@ class Engine:
         self._optims[name] = optim
         self._scheds[name] = sched
 
-    def get_model_names(self, names=None):
+    def get_model_names(self, names: str | list[str] | None = None) -> list[str]:
         names_real = list(self._models.keys())
         if names is not None:
             if not isinstance(names, list):
                 names = [names]
             for name in names:
-                assert name in names_real
+                if name not in names_real:
+                    raise ValueError(f"Unknown model name: {name}. Must be one of {names_real}")
             return names
         else:
             return names_real
 
-    def save_model(self, epoch, rank1, save_dir, is_best=False):
+    def save_model(self, epoch: int, rank1: float, save_dir: str, is_best: bool = False) -> None:
         names = self.get_model_names()
 
         for name in names:
@@ -87,8 +98,9 @@ class Engine:
                 is_best=is_best,
             )
 
-    def set_model_mode(self, mode="train", names=None):
-        assert mode in ["train", "eval", "test"]
+    def set_model_mode(self, mode: str = "train", names: str | list[str] | None = None) -> None:
+        if mode not in ["train", "eval", "test"]:
+            raise ValueError(f"mode must be one of ['train', 'eval', 'test'], but got {mode}")
         names = self.get_model_names(names)
 
         for name in names:
@@ -97,12 +109,12 @@ class Engine:
             else:
                 self._models[name].eval()
 
-    def get_current_lr(self, names=None):
+    def get_current_lr(self, names: str | list[str] | None = None) -> float:
         names = self.get_model_names(names)
         name = names[0]
         return self._optims[name].param_groups[-1]["lr"]
 
-    def update_lr(self, names=None):
+    def update_lr(self, names: str | list[str] | None = None) -> None:
         names = self.get_model_names(names)
 
         for name in names:
@@ -111,23 +123,23 @@ class Engine:
 
     def run(
         self,
-        save_dir="log",
-        max_epoch=0,
-        start_epoch=0,
-        print_freq=10,
-        fixbase_epoch=0,
-        open_layers=None,
-        start_eval=0,
-        eval_freq=-1,
-        test_only=False,
-        dist_metric="euclidean",
-        normalize_feature=False,
-        visrank=False,
-        visrank_topk=10,
-        use_metric_cuhk03=False,
-        ranks=None,
-        rerank=False,
-    ):
+        save_dir: str = "log",
+        max_epoch: int = 0,
+        start_epoch: int = 0,
+        print_freq: int = 10,
+        fixbase_epoch: int = 0,
+        open_layers: str | Sequence[str] | None = None,
+        start_eval: int = 0,
+        eval_freq: int = -1,
+        test_only: bool = False,
+        dist_metric: str = "euclidean",
+        normalize_feature: bool = False,
+        visrank: bool = False,
+        visrank_topk: int = 10,
+        use_metric_cuhk03: bool = False,
+        ranks: Sequence[int] | None = None,
+        rerank: bool = False,
+    ) -> None:
         r"""A unified pipeline for training and evaluating a model.
 
         Args:
@@ -183,7 +195,7 @@ class Engine:
         time_start = time.time()
         self.start_epoch = start_epoch
         self.max_epoch = max_epoch
-        print("=> Start training")
+        logger.info("=> Start training")
 
         for epoch in range(self.start_epoch, self.max_epoch):
             self.epoch = epoch
@@ -207,7 +219,7 @@ class Engine:
                 self.save_model(self.epoch, rank1, save_dir)
 
         if self.max_epoch > 0:
-            print("=> Final test")
+            logger.info("=> Final test")
             rank1 = self.test(
                 dist_metric=dist_metric,
                 normalize_feature=normalize_feature,
@@ -221,11 +233,16 @@ class Engine:
 
         elapsed = round(time.time() - time_start)
         elapsed = str(datetime.timedelta(seconds=elapsed))
-        print(f"Elapsed {elapsed}")
+        logger.info("Elapsed %s", elapsed)
         if self.writer is not None:
             self.writer.close()
 
-    def train(self, print_freq=10, fixbase_epoch=0, open_layers=None):
+    def train(
+        self,
+        print_freq: int = 10,
+        fixbase_epoch: int = 0,
+        open_layers: str | Sequence[str] | None = None,
+    ) -> None:
         losses = MetricMeter()
         batch_time = AverageMeter()
         data_time = AverageMeter()
@@ -248,7 +265,7 @@ class Engine:
                 nb_future_epochs = (self.max_epoch - (self.epoch + 1)) * self.num_batches
                 eta_seconds = batch_time.avg * (nb_this_epoch + nb_future_epochs)
                 eta_str = str(datetime.timedelta(seconds=int(eta_seconds)))
-                print(
+                logger.info(
                     f"epoch: [{self.epoch + 1}/{self.max_epoch}][{self.batch_idx + 1}/{self.num_batches}]\t"
                     f"time {batch_time.val:.3f} ({batch_time.avg:.3f})\t"
                     f"data {data_time.val:.3f} ({data_time.avg:.3f})\t"
@@ -269,20 +286,20 @@ class Engine:
 
         self.update_lr()
 
-    def forward_backward(self, data):
+    def forward_backward(self, data: Any) -> dict[str, float]:
         raise NotImplementedError
 
     def test(
         self,
-        dist_metric="euclidean",
-        normalize_feature=False,
-        visrank=False,
-        visrank_topk=10,
-        save_dir="",
-        use_metric_cuhk03=False,
-        ranks=None,
-        rerank=False,
-    ):
+        dist_metric: str = "euclidean",
+        normalize_feature: bool = False,
+        visrank: bool = False,
+        visrank_topk: int = 10,
+        save_dir: str = "",
+        use_metric_cuhk03: bool = False,
+        ranks: Sequence[int] | None = None,
+        rerank: bool = False,
+    ) -> float:
         r"""Tests model on target datasets.
 
         .. note::
@@ -303,7 +320,7 @@ class Engine:
 
         for name in targets:
             domain = "source" if name in self.datamanager.sources else "target"
-            print(f"##### Evaluating {name} ({domain}) #####")
+            logger.info("##### Evaluating %s (%s) #####", name, domain)
             query_loader = self.test_loader[name]["query"]
             gallery_loader = self.test_loader[name]["gallery"]
             rank1, mAP = self._evaluate(
@@ -329,18 +346,18 @@ class Engine:
     @torch.no_grad()
     def _evaluate(
         self,
-        dataset_name="",
-        query_loader=None,
-        gallery_loader=None,
-        dist_metric="euclidean",
-        normalize_feature=False,
-        visrank=False,
-        visrank_topk=10,
-        save_dir="",
-        use_metric_cuhk03=False,
-        ranks=None,
-        rerank=False,
-    ):
+        dataset_name: str = "",
+        query_loader: torch.utils.data.DataLoader | None = None,
+        gallery_loader: torch.utils.data.DataLoader | None = None,
+        dist_metric: str = "euclidean",
+        normalize_feature: bool = False,
+        visrank: bool = False,
+        visrank_topk: int = 10,
+        save_dir: str = "",
+        use_metric_cuhk03: bool = False,
+        ranks: Sequence[int] | None = None,
+        rerank: bool = False,
+    ) -> tuple[float, float]:
         if ranks is None:
             ranks = [1, 5, 10, 20]
         batch_time = AverageMeter()
@@ -350,11 +367,11 @@ class Engine:
             for _batch_idx, data in enumerate(data_loader):
                 imgs, pids, camids = self.parse_data_for_eval(data)
                 if self.use_gpu:
-                    imgs = imgs.cuda()
+                    imgs = imgs.to(self.device)
                 end = time.time()
                 features = self.extract_features(imgs)
                 batch_time.update(time.time() - end)
-                features = features.cpu()
+                features = features.to("cpu")
                 f_.append(features)
                 pids_.extend(pids.tolist())
                 camids_.extend(camids.tolist())
@@ -363,41 +380,41 @@ class Engine:
             camids_ = np.asarray(camids_)
             return f_, pids_, camids_
 
-        print("Extracting features from query set ...")
+        logger.info("Extracting features from query set ...")
         qf, q_pids, q_camids = _feature_extraction(query_loader)
-        print(f"Done, obtained {qf.size(0)}-by-{qf.size(1)} matrix")
+        logger.info("Done, obtained %s-by-%s matrix", qf.size(0), qf.size(1))
 
-        print("Extracting features from gallery set ...")
+        logger.info("Extracting features from gallery set ...")
         gf, g_pids, g_camids = _feature_extraction(gallery_loader)
-        print(f"Done, obtained {gf.size(0)}-by-{gf.size(1)} matrix")
+        logger.info("Done, obtained %s-by-%s matrix", gf.size(0), gf.size(1))
 
-        print(f"Speed: {batch_time.avg:.4f} sec/batch")
+        logger.info("Speed: %.4f sec/batch", batch_time.avg)
 
         if normalize_feature:
-            print("Normalzing features with L2 norm ...")
+            logger.info("Normalzing features with L2 norm ...")
             qf = F.normalize(qf, p=2, dim=1)
             gf = F.normalize(gf, p=2, dim=1)
 
-        print(f"Computing distance matrix with metric={dist_metric} ...")
+        logger.info("Computing distance matrix with metric=%s ...", dist_metric)
         distmat = metrics.compute_distance_matrix(qf, gf, dist_metric)
         distmat = distmat.numpy()
 
         if rerank:
-            print("Applying person re-ranking ...")
+            logger.info("Applying person re-ranking ...")
             distmat_qq = metrics.compute_distance_matrix(qf, qf, dist_metric)
             distmat_gg = metrics.compute_distance_matrix(gf, gf, dist_metric)
             distmat = re_ranking(distmat, distmat_qq, distmat_gg)
 
-        print("Computing CMC and mAP ...")
+        logger.info("Computing CMC and mAP ...")
         cmc, mAP = metrics.evaluate_rank(
             distmat, q_pids, g_pids, q_camids, g_camids, use_metric_cuhk03=use_metric_cuhk03
         )
 
-        print("** Results **")
-        print(f"mAP: {mAP:.1%}")
-        print("CMC curve")
+        logger.info("** Results **")
+        logger.info("mAP: %.1f%%", mAP * 100)
+        logger.info("CMC curve")
         for r in ranks:
-            print(f"Rank-{r:<3}: {cmc[r - 1]:.1%}")
+            logger.info("Rank-%-3d: %.1f%%", r, cmc[r - 1] * 100)
 
         if visrank:
             visualize_ranked_results(
@@ -412,28 +429,36 @@ class Engine:
 
         return cmc[0], mAP
 
-    def compute_loss(self, criterion, outputs, targets):
+    def compute_loss(
+        self, criterion: Any, outputs: torch.Tensor | Sequence[torch.Tensor], targets: torch.Tensor
+    ) -> torch.Tensor:
         if isinstance(outputs, (tuple, list)):
             loss = DeepSupervision(criterion, outputs, targets)
         else:
             loss = criterion(outputs, targets)
         return loss
 
-    def extract_features(self, input):
+    def extract_features(self, input: torch.Tensor) -> torch.Tensor:
         return self.model(input)
 
-    def parse_data_for_train(self, data):
+    def parse_data_for_train(self, data: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         imgs = data["img"]
         pids = data["pid"]
         return imgs, pids
 
-    def parse_data_for_eval(self, data):
+    def parse_data_for_eval(self, data: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         imgs = data["img"]
         pids = data["pid"]
         camids = data["camid"]
         return imgs, pids, camids
 
-    def two_stepped_transfer_learning(self, epoch, fixbase_epoch, open_layers, model=None):
+    def two_stepped_transfer_learning(
+        self,
+        epoch: int,
+        fixbase_epoch: int,
+        open_layers: str | Sequence[str] | None,
+        model: torch.nn.Module | None = None,
+    ) -> None:
         """Two-stepped transfer learning.
 
         The idea is to freeze base layers for a certain number of epochs
@@ -446,7 +471,7 @@ class Engine:
             return
 
         if (epoch + 1) <= fixbase_epoch and open_layers is not None:
-            print(f"* Only train {open_layers} (epoch: {epoch + 1}/{fixbase_epoch})")
+            logger.info("* Only train %s (epoch: %s/%s)", open_layers, epoch + 1, fixbase_epoch)
             open_specified_layers(model, open_layers)
         else:
             open_all_layers(model)

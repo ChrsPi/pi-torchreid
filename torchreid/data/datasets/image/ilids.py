@@ -4,7 +4,7 @@ import glob
 import os.path as osp
 import random
 
-from torchreid.utils import read_json, write_json
+from torchreid.utils import logger, read_json, write_json
 
 from ..dataset import ImageDataset
 
@@ -49,12 +49,13 @@ class iLIDS(ImageDataset):
 
     def prepare_split(self):
         if not osp.exists(self.split_path):
-            print("Creating splits ...")
+            logger.info("Creating splits ...")
 
             paths = glob.glob(osp.join(self.data_dir, "*.jpg"))
             img_names = [osp.basename(path) for path in paths]
             num_imgs = len(img_names)
-            assert num_imgs == 476, f"There should be 476 images, but got {num_imgs}, please check the data"
+            if num_imgs != 476:
+                raise RuntimeError(f"There should be 476 images, but got {num_imgs}, please check the data")
 
             # store image names
             # image naming format:
@@ -66,7 +67,8 @@ class iLIDS(ImageDataset):
                 pid_dict[pid].append(img_name)
             pids = list(pid_dict.keys())
             num_pids = len(pids)
-            assert num_pids == 119, f"There should be 119 identities, but got {num_pids}, please check the data"
+            if num_pids != 119:
+                raise RuntimeError(f"There should be 119 identities, but got {num_pids}, please check the data")
 
             num_train_pids = int(num_pids * 0.5)
 
@@ -98,9 +100,9 @@ class iLIDS(ImageDataset):
                 split = {"train": train, "query": query, "gallery": gallery}
                 splits.append(split)
 
-            print(f"Totally {len(splits)} splits are created")
+            logger.info("Totally %s splits are created", len(splits))
             write_json(splits, self.split_path)
-            print(f"Split file is saved to {self.split_path}")
+            logger.info("Split file is saved to %s", self.split_path)
 
     def get_pid2label(self, img_names):
         pid_container = set()

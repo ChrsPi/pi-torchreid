@@ -14,12 +14,12 @@ class TripletLoss(nn.Module):
         margin (float, optional): margin for triplet. Default is 0.3.
     """
 
-    def __init__(self, margin=0.3):
+    def __init__(self, margin: float = 0.3) -> None:
         super().__init__()
         self.margin = margin
         self.ranking_loss = nn.MarginRankingLoss(margin=margin)
 
-    def forward(self, inputs, targets):
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
         Args:
             inputs (torch.Tensor): feature matrix with shape (batch_size, feat_dim).

@@ -76,8 +76,10 @@ class ImageTripletEngine(Engine):
         self.scheduler = scheduler
         self.register_model("model", model, optimizer, scheduler)
 
-        assert weight_t >= 0 and weight_x >= 0
-        assert weight_t + weight_x > 0
+        if weight_t < 0 or weight_x < 0:
+            raise ValueError("weight_t and weight_x must be non-negative")
+        if weight_t + weight_x <= 0:
+            raise ValueError("At least one of weight_t or weight_x must be greater than zero")
         self.weight_t = weight_t
         self.weight_x = weight_x
 
@@ -90,8 +92,8 @@ class ImageTripletEngine(Engine):
         imgs, pids = self.parse_data_for_train(data)
 
         if self.use_gpu:
-            imgs = imgs.cuda()
-            pids = pids.cuda()
+            imgs = imgs.to(self.device)
+            pids = pids.to(self.device)
 
         outputs, features = self.model(imgs)
 
@@ -109,7 +111,8 @@ class ImageTripletEngine(Engine):
             loss_summary["loss_x"] = loss_x.item()
             loss_summary["acc"] = metrics.accuracy(outputs, pids)[0].item()
 
-        assert loss_summary
+        if not loss_summary:
+            raise ValueError("loss_summary is empty; check loss weights")
 
         self.optimizer.zero_grad()
         loss.backward()

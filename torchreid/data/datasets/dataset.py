@@ -6,7 +6,7 @@ import zipfile
 import numpy as np
 import torch
 
-from torchreid.utils import download_url, mkdir_if_missing, read_image
+from torchreid.utils import download_url, logger, mkdir_if_missing, read_image
 
 
 class Dataset:
@@ -216,14 +216,18 @@ class Dataset:
                 "document to prepare this dataset"
             )
 
-        print(f'Creating directory "{dataset_dir}"')
+        logger.info('Creating directory "%s"', dataset_dir)
         mkdir_if_missing(dataset_dir)
         fpath = osp.join(dataset_dir, osp.basename(dataset_url))
 
-        print(f'Downloading {self.__class__.__name__} dataset to "{dataset_dir}"')
+        logger.info(
+            'Downloading %s dataset to "%s"',
+            self.__class__.__name__,
+            dataset_dir,
+        )
         download_url(dataset_url, fpath)
 
-        print(f'Extracting "{fpath}"')
+        logger.info('Extracting "%s"', fpath)
         try:
             with tarfile.open(fpath) as tar:
                 tar.extractall(path=dataset_dir)
@@ -231,7 +235,7 @@ class Dataset:
             with zipfile.ZipFile(fpath, "r") as zip_ref:
                 zip_ref.extractall(dataset_dir)
 
-        print(f"{self.__class__.__name__} dataset is ready")
+        logger.info("%s dataset is ready", self.__class__.__name__)
 
     def check_before_run(self, required_files):
         """Checks if required files exist before going deeper.
@@ -317,14 +321,29 @@ class ImageDataset(Dataset):
         num_gallery_pids = self.get_num_pids(self.gallery)
         num_gallery_cams = self.get_num_cams(self.gallery)
 
-        print(f"=> Loaded {self.__class__.__name__}")
-        print("  ----------------------------------------")
-        print("  subset   | # ids | # images | # cameras")
-        print("  ----------------------------------------")
-        print(f"  train    | {num_train_pids:5d} | {len(self.train):8d} | {num_train_cams:9d}")
-        print(f"  query    | {num_query_pids:5d} | {len(self.query):8d} | {num_query_cams:9d}")
-        print(f"  gallery  | {num_gallery_pids:5d} | {len(self.gallery):8d} | {num_gallery_cams:9d}")
-        print("  ----------------------------------------")
+        logger.info("=> Loaded %s", self.__class__.__name__)
+        logger.info("  ----------------------------------------")
+        logger.info("  subset   | # ids | # images | # cameras")
+        logger.info("  ----------------------------------------")
+        logger.info(
+            "  train    | %5d | %8d | %9d",
+            num_train_pids,
+            len(self.train),
+            num_train_cams,
+        )
+        logger.info(
+            "  query    | %5d | %8d | %9d",
+            num_query_pids,
+            len(self.query),
+            num_query_cams,
+        )
+        logger.info(
+            "  gallery  | %5d | %8d | %9d",
+            num_gallery_pids,
+            len(self.gallery),
+            num_gallery_cams,
+        )
+        logger.info("  ----------------------------------------")
 
 
 class VideoDataset(Dataset):
@@ -370,7 +389,8 @@ class VideoDataset(Dataset):
                 indices = np.arange(0, num_imgs)
                 num_pads = self.seq_len - num_imgs
                 indices = np.concatenate([indices, np.ones(num_pads).astype(np.int32) * (num_imgs - 1)])
-            assert len(indices) == self.seq_len
+            if len(indices) != self.seq_len:
+                raise RuntimeError("Sampled indices do not match seq_len")
 
         elif self.sample_method == "all":
             # Samples all images in a tracklet. batch_size must be set to 1
@@ -403,11 +423,26 @@ class VideoDataset(Dataset):
         num_gallery_pids = self.get_num_pids(self.gallery)
         num_gallery_cams = self.get_num_cams(self.gallery)
 
-        print(f"=> Loaded {self.__class__.__name__}")
-        print("  -------------------------------------------")
-        print("  subset   | # ids | # tracklets | # cameras")
-        print("  -------------------------------------------")
-        print(f"  train    | {num_train_pids:5d} | {len(self.train):11d} | {num_train_cams:9d}")
-        print(f"  query    | {num_query_pids:5d} | {len(self.query):11d} | {num_query_cams:9d}")
-        print(f"  gallery  | {num_gallery_pids:5d} | {len(self.gallery):11d} | {num_gallery_cams:9d}")
-        print("  -------------------------------------------")
+        logger.info("=> Loaded %s", self.__class__.__name__)
+        logger.info("  -------------------------------------------")
+        logger.info("  subset   | # ids | # tracklets | # cameras")
+        logger.info("  -------------------------------------------")
+        logger.info(
+            "  train    | %5d | %11d | %9d",
+            num_train_pids,
+            len(self.train),
+            num_train_cams,
+        )
+        logger.info(
+            "  query    | %5d | %11d | %9d",
+            num_query_pids,
+            len(self.query),
+            num_query_cams,
+        )
+        logger.info(
+            "  gallery  | %5d | %11d | %9d",
+            num_gallery_pids,
+            len(self.gallery),
+            num_gallery_cams,
+        )
+        logger.info("  -------------------------------------------")

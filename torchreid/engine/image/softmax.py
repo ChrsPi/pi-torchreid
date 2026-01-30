@@ -67,8 +67,8 @@ class ImageSoftmaxEngine(Engine):
         imgs, pids = self.parse_data_for_train(data)
 
         if self.use_gpu:
-            imgs = imgs.cuda()
-            pids = pids.cuda()
+            imgs = imgs.to(self.device)
+            pids = pids.to(self.device)
 
         outputs = self.model(imgs)
         loss = self.compute_loss(self.criterion, outputs, pids)

@@ -1,8 +1,14 @@
+from typing import Literal
+
 import torch
 from torch.nn import functional as F
 
 
-def compute_distance_matrix(input1, input2, metric="euclidean"):
+def compute_distance_matrix(
+    input1: torch.Tensor,
+    input2: torch.Tensor,
+    metric: Literal["euclidean", "cosine"] = "euclidean",
+) -> torch.Tensor:
     """A wrapper function for computing distance matrix.
 
     Args:
@@ -22,11 +28,16 @@ def compute_distance_matrix(input1, input2, metric="euclidean"):
        >>> distmat.size() # (10, 100)
     """
     # check input
-    assert isinstance(input1, torch.Tensor)
-    assert isinstance(input2, torch.Tensor)
-    assert input1.dim() == 2, f"Expected 2-D tensor, but got {input1.dim()}-D"
-    assert input2.dim() == 2, f"Expected 2-D tensor, but got {input2.dim()}-D"
-    assert input1.size(1) == input2.size(1)
+    if not isinstance(input1, torch.Tensor):
+        raise ValueError("input1 must be a torch.Tensor")
+    if not isinstance(input2, torch.Tensor):
+        raise ValueError("input2 must be a torch.Tensor")
+    if input1.dim() != 2:
+        raise ValueError(f"Expected 2-D tensor, but got {input1.dim()}-D")
+    if input2.dim() != 2:
+        raise ValueError(f"Expected 2-D tensor, but got {input2.dim()}-D")
+    if input1.size(1) != input2.size(1):
+        raise ValueError("input1 and input2 must have the same number of features")
 
     if metric == "euclidean":
         distmat = euclidean_squared_distance(input1, input2)
@@ -38,7 +49,7 @@ def compute_distance_matrix(input1, input2, metric="euclidean"):
     return distmat
 
 
-def euclidean_squared_distance(input1, input2):
+def euclidean_squared_distance(input1: torch.Tensor, input2: torch.Tensor) -> torch.Tensor:
     """Computes euclidean squared distance.
 
     Args:
@@ -56,7 +67,7 @@ def euclidean_squared_distance(input1, input2):
     return distmat
 
 
-def cosine_distance(input1, input2):
+def cosine_distance(input1: torch.Tensor, input2: torch.Tensor) -> torch.Tensor:
     """Computes cosine distance.
 
     Args:

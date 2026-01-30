@@ -1,25 +1,39 @@
-import torch
+from typing import Literal
 
-from .densenet import *
-from .hacnn import *
-from .inceptionresnetv2 import *
-from .inceptionv4 import *
-from .mlfn import *
-from .mobilenetv2 import *
-from .mudeep import *
-from .nasnet import *
-from .osnet import *
-from .osnet_ain import *
-from .pcb import *
-from .resnet import *
-from .resnet_ibn_a import *
-from .resnet_ibn_b import *
-from .resnetmid import *
-from .senet import *
-from .shufflenet import *
-from .shufflenetv2 import *
-from .squeezenet import *
-from .xception import *
+import torch
+from torch import nn
+
+from torchreid.utils.logging_config import logger
+
+from .densenet import densenet121, densenet121_fc512, densenet161, densenet169, densenet201
+from .hacnn import HACNN
+from .inceptionresnetv2 import inceptionresnetv2
+from .inceptionv4 import inceptionv4
+from .mlfn import mlfn
+from .mobilenetv2 import mobilenetv2_x1_0, mobilenetv2_x1_4
+from .mudeep import MuDeep
+from .nasnet import nasnetamobile
+from .osnet import osnet_ibn_x1_0, osnet_x0_5, osnet_x0_25, osnet_x0_75, osnet_x1_0
+from .osnet_ain import osnet_ain_x0_5, osnet_ain_x0_25, osnet_ain_x0_75, osnet_ain_x1_0
+from .pcb import pcb_p4, pcb_p6
+from .resnet import (
+    resnet18,
+    resnet34,
+    resnet50,
+    resnet50_fc512,
+    resnet101,
+    resnet152,
+    resnext50_32x4d,
+    resnext101_32x8d,
+)
+from .resnet_ibn_a import resnet50_ibn_a
+from .resnet_ibn_b import resnet50_ibn_b
+from .resnetmid import resnet50mid
+from .senet import se_resnet50, se_resnet50_fc512, se_resnet101, se_resnext50_32x4d, se_resnext101_32x4d
+from .shufflenet import shufflenet
+from .shufflenetv2 import shufflenet_v2_x0_5, shufflenet_v2_x1_0, shufflenet_v2_x1_5, shufflenet_v2_x2_0
+from .squeezenet import squeezenet1_0, squeezenet1_0_fc512, squeezenet1_1
+from .xception import xception
 
 __model_factory = {
     # image classification models
@@ -77,17 +91,23 @@ __model_factory = {
 }
 
 
-def show_avai_models():
+def show_avai_models() -> None:
     """Displays available models.
 
     Examples::
         >>> from torchreid import models
         >>> models.show_avai_models()
     """
-    print(list(__model_factory.keys()))
+    logger.info("%s", list(__model_factory.keys()))
 
 
-def build_model(name, num_classes, loss="softmax", pretrained=True, use_gpu=True):
+def build_model(
+    name: str,
+    num_classes: int,
+    loss: Literal["softmax", "triplet"] = "softmax",
+    pretrained: bool = True,
+    use_gpu: bool = True,
+) -> nn.Module:
     """A function wrapper for building a model.
 
     Args:

@@ -3,7 +3,7 @@ import os.path as osp
 
 import numpy as np
 
-from torchreid.utils import read_json, write_json
+from torchreid.utils import logger, read_json, write_json
 
 from ..dataset import ImageDataset
 
@@ -57,13 +57,14 @@ class VIPeR(ImageDataset):
 
     def prepare_split(self):
         if not osp.exists(self.split_path):
-            print("Creating 10 random splits of train ids and test ids")
+            logger.info("Creating 10 random splits of train ids and test ids")
 
             cam_a_imgs = sorted(glob.glob(osp.join(self.cam_a_dir, "*.bmp")))
             cam_b_imgs = sorted(glob.glob(osp.join(self.cam_b_dir, "*.bmp")))
-            assert len(cam_a_imgs) == len(cam_b_imgs)
+            if len(cam_a_imgs) != len(cam_b_imgs):
+                raise RuntimeError("Camera A and B image counts do not match")
             num_pids = len(cam_a_imgs)
-            print(f"Number of identities: {num_pids}")
+            logger.info("Number of identities: %s", num_pids)
             num_train_pids = num_pids // 2
             """
             In total, there will be 20 splits because each random split creates two
@@ -80,7 +81,8 @@ class VIPeR(ImageDataset):
                 np.random.shuffle(order)
                 train_idxs = order[:num_train_pids]
                 test_idxs = order[num_train_pids:]
-                assert not bool(set(train_idxs) & set(test_idxs)), "Error: train and test overlap"
+                if set(train_idxs) & set(test_idxs):
+                    raise RuntimeError("Error: train and test overlap")
 
                 train = []
                 for pid, idx in enumerate(train_idxs):
@@ -119,6 +121,6 @@ class VIPeR(ImageDataset):
                 }
                 splits.append(split)
 
-            print(f"Totally {len(splits)} splits are created")
+            logger.info("Totally %s splits are created", len(splits))
             write_json(splits, self.split_path)
-            print(f"Split file saved to {self.split_path}")
+            logger.info("Split file saved to %s", self.split_path)

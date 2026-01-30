@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import numpy as np
 from PIL import Image
 import torch
@@ -5,6 +7,7 @@ import torchvision.transforms as T
 
 from torchreid.models import build_model
 from torchreid.utils import check_isfile, compute_model_complexity, load_pretrained_weights
+from torchreid.utils.logging_config import logger
 
 
 class FeatureExtractor:
@@ -55,15 +58,15 @@ class FeatureExtractor:
 
     def __init__(
         self,
-        model_name="",
-        model_path="",
-        image_size=(256, 128),
-        pixel_mean=None,
-        pixel_std=None,
-        pixel_norm=True,
-        device="cuda",
-        verbose=True,
-    ):
+        model_name: str = "",
+        model_path: str = "",
+        image_size: Sequence[int] = (256, 128),
+        pixel_mean: Sequence[float] | None = None,
+        pixel_std: Sequence[float] | None = None,
+        pixel_norm: bool = True,
+        device: str = "cuda",
+        verbose: bool = True,
+    ) -> None:
         # Build model
         if pixel_std is None:
             pixel_std = [0.229, 0.224, 0.225]
@@ -79,9 +82,9 @@ class FeatureExtractor:
 
         if verbose:
             num_params, flops = compute_model_complexity(model, (1, 3, image_size[0], image_size[1]))
-            print(f"Model: {model_name}")
-            print(f"- params: {num_params:,}")
-            print(f"- flops: {flops:,}")
+            logger.info("Model: %s", model_name)
+            logger.info("- params: %s", f"{num_params:,}")
+            logger.info("- flops: %s", f"{flops:,}")
 
         if model_path and check_isfile(model_path):
             load_pretrained_weights(model, model_path)
@@ -105,7 +108,10 @@ class FeatureExtractor:
         self.to_pil = to_pil
         self.device = device
 
-    def __call__(self, input):
+    def __call__(
+        self,
+        input: str | np.ndarray | torch.Tensor | Sequence[str | np.ndarray],
+    ) -> torch.Tensor:
         if isinstance(input, list):
             images = []
 

@@ -50,7 +50,8 @@ class MSMT17(ImageDataset):
                 test_dir = VERSION_DICT[main_dir][TEST_DIR_KEY]
                 has_main_dir = True
                 break
-        assert has_main_dir, "Dataset folder not found"
+        if not has_main_dir:
+            raise RuntimeError("Dataset folder not found")
 
         self.train_dir = osp.join(self.dataset_dir, main_dir, train_dir)
         self.test_dir = osp.join(self.dataset_dir, main_dir, test_dir)

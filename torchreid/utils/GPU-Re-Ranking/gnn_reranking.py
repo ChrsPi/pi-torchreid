@@ -48,5 +48,5 @@ def gnn_reranking(X_q, X_g, k1, k2):
     del A, S
 
     L = torch.sort(-cosine_similarity, dim=1)[1]
-    L = L.data.cpu().numpy()
+    L = L.detach().to("cpu").numpy()
     return L

@@ -1,5 +1,7 @@
 """Tests for model building and forward pass."""
 
+import logging
+
 import pytest
 import torch
 
@@ -84,13 +86,13 @@ def _build_model(model_name, device, loss, num_classes=10):
 class TestModelBuilding:
     """Test model building functionality."""
 
-    def test_show_avai_models(self, capsys):
+    def test_show_avai_models(self, caplog):
         """Test show_avai_models() function."""
-        models.show_avai_models()
-        captured = capsys.readouterr()
-        assert len(captured.out) > 0
+        with caplog.at_level(logging.INFO, logger="torchreid"):
+            models.show_avai_models()
+        assert caplog.text
         # Check that some model names are in the output
-        assert "resnet50" in captured.out or "osnet" in captured.out
+        assert "resnet50" in caplog.text or "osnet" in caplog.text
 
     @pytest.mark.parametrize("model_name", ALL_MODELS)
     def test_build_model_valid_names(self, model_name):

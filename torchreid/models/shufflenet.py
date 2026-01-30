@@ -30,7 +30,8 @@ class ChannelShuffle(nn.Module):
 class Bottleneck(nn.Module):
     def __init__(self, in_channels, out_channels, stride, num_groups, group_conv1x1=True):
         super().__init__()
-        assert stride in [1, 2], "Warning: stride must be either 1 or 2"
+        if stride not in [1, 2]:
+            raise ValueError("stride must be either 1 or 2")
         self.stride = stride
         mid_channels = out_channels // 4
         if stride == 2:

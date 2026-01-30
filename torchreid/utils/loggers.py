@@ -2,6 +2,7 @@ import os
 import os.path as osp
 import sys
 
+from .logging_config import logger
 from .tools import mkdir_if_missing
 
 __all__ = ["Logger", "RankLogger"]
@@ -129,9 +130,9 @@ class RankLogger:
 
     def show_summary(self):
         """Shows saved results."""
-        print("=> Show performance summary")
+        logger.info("=> Show performance summary")
         for name in self.targets:
             from_where = "source" if name in self.sources else "target"
-            print(f"{name} ({from_where})")
+            logger.info("%s (%s)", name, from_where)
             for epoch, rank1 in zip(self.logger[name]["epoch"], self.logger[name]["rank1"], strict=False):
-                print(f"- epoch {epoch}\t rank1 {rank1:.1%}")
+                logger.info("- epoch %s\t rank1 %.1f%%", epoch, rank1 * 100)

@@ -8,6 +8,7 @@ import warnings
 import torch
 import torch.nn as nn
 
+from .logging_config import logger
 from .tools import mkdir_if_missing
 
 __all__ = [
@@ -55,7 +56,7 @@ def save_checkpoint(state, save_dir, is_best=False, remove_module_from_keys=Fals
     epoch = state["epoch"]
     fpath = osp.join(save_dir, "model.pth.tar-" + str(epoch))
     torch.save(state, fpath)
-    print(f'Checkpoint saved to "{fpath}"')
+    logger.info('Checkpoint saved to "%s"', fpath)
     if is_best:
         shutil.copy(fpath, osp.join(osp.dirname(fpath), "model-best.pth.tar"))
 
@@ -90,7 +91,7 @@ def load_checkpoint(fpath):
         pickle.Unpickler = partial(pickle.Unpickler, encoding="latin1")
         checkpoint = torch.load(fpath, pickle_module=pickle, map_location=map_location)
     except Exception:
-        print(f'Unable to load checkpoint from "{fpath}"')
+        logger.warning('Unable to load checkpoint from "%s"', fpath)
         raise
     return checkpoint
 
@@ -117,20 +118,20 @@ def resume_from_checkpoint(fpath, model, optimizer=None, scheduler=None):
         >>>     fpath, model, optimizer, scheduler
         >>> )
     """
-    print(f'Loading checkpoint from "{fpath}"')
+    logger.info('Loading checkpoint from "%s"', fpath)
     checkpoint = load_checkpoint(fpath)
     model.load_state_dict(checkpoint["state_dict"])
-    print("Loaded model weights")
+    logger.info("Loaded model weights")
     if optimizer is not None and "optimizer" in checkpoint:
         optimizer.load_state_dict(checkpoint["optimizer"])
-        print("Loaded optimizer")
+        logger.info("Loaded optimizer")
     if scheduler is not None and "scheduler" in checkpoint:
         scheduler.load_state_dict(checkpoint["scheduler"])
-        print("Loaded scheduler")
+        logger.info("Loaded scheduler")
     start_epoch = checkpoint["epoch"]
-    print(f"Last epoch = {start_epoch}")
+    logger.info("Last epoch = %s", start_epoch)
     if "rank1" in checkpoint:
-        print("Last rank1 = {:.1%}".format(checkpoint["rank1"]))
+        logger.info("Last rank1 = %.1f%%", checkpoint["rank1"] * 100)
     return start_epoch
 
 
@@ -198,7 +199,8 @@ def open_specified_layers(model, open_layers):
         open_layers = [open_layers]
 
     for layer in open_layers:
-        assert hasattr(model, layer), f'"{layer}" is not an attribute of the model, please provide the correct name'
+        if not hasattr(model, layer):
+            raise ValueError(f'"{layer}" is not an attribute of the model, please provide the correct name')
 
     for name, module in model.named_children():
         if name in open_layers:
@@ -284,6 +286,9 @@ def load_pretrained_weights(model, weight_path):
             stacklevel=2,
         )
     else:
-        print(f'Successfully loaded pretrained weights from "{weight_path}"')
+        logger.info('Successfully loaded pretrained weights from "%s"', weight_path)
         if len(discarded_layers) > 0:
-            print(f"** The following layers are discarded due to unmatched keys or layer size: {discarded_layers}")
+            logger.info(
+                "** The following layers are discarded due to unmatched keys or layer size: %s",
+                discarded_layers,
+            )

@@ -77,8 +77,10 @@ class Market1501(ImageDataset):
             pid, camid = map(int, pattern.search(img_path).groups())
             if pid == -1:
                 continue  # junk images are just ignored
-            assert 0 <= pid <= 1501  # pid == 0 means background
-            assert 1 <= camid <= 6
+            if not (0 <= pid <= 1501):  # pid == 0 means background
+                raise RuntimeError(f"pid must be between 0 and 1501, got {pid}")
+            if not (1 <= camid <= 6):
+                raise RuntimeError(f"camid must be between 1 and 6, got {camid}")
             camid -= 1  # index starts from 0
             if relabel:
                 pid = pid2label[pid]

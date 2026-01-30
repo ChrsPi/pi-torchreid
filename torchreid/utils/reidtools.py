@@ -4,6 +4,7 @@ import shutil
 import cv2
 import numpy as np
 
+from .logging_config import logger
 from .tools import mkdir_if_missing
 
 __all__ = ["visualize_ranked_results"]
@@ -37,12 +38,14 @@ def visualize_ranked_results(distmat, dataset, data_type, width=128, height=256,
     num_q, num_g = distmat.shape
     mkdir_if_missing(save_dir)
 
-    print(f"# query: {num_q}\n# gallery {num_g}")
-    print(f"Visualizing top-{topk} ranks ...")
+    logger.info("# query: %s\n# gallery %s", num_q, num_g)
+    logger.info("Visualizing top-%s ranks ...", topk)
 
     query, gallery = dataset
-    assert num_q == len(query)
-    assert num_g == len(gallery)
+    if num_q != len(query):
+        raise ValueError("num_q must match the number of query samples")
+    if num_g != len(gallery):
+        raise ValueError("num_g must match the number of gallery samples")
 
     indices = np.argsort(distmat, axis=1)
 
@@ -116,6 +119,6 @@ def visualize_ranked_results(distmat, dataset, data_type, width=128, height=256,
             cv2.imwrite(osp.join(save_dir, imname + ".jpg"), grid_img)
 
         if (q_idx + 1) % 100 == 0:
-            print(f"- done {q_idx + 1}/{num_q}")
+            logger.info("- done %s/%s", q_idx + 1, num_q)
 
-    print(f'Done. Images have been saved to "{save_dir}" ...')
+    logger.info('Done. Images have been saved to "%s" ...', save_dir)

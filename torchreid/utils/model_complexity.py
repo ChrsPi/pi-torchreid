@@ -5,6 +5,8 @@ import math
 import numpy as np
 import torch
 
+from .logging_config import logger
+
 __all__ = ["compute_model_complexity"]
 """
 Utility
@@ -308,8 +310,8 @@ def compute_model_complexity(model, input_size, verbose=False, only_conv_linear=
 
     model.eval().apply(_add_hooks)
     input = torch.rand(input_size)
-    if next(model.parameters()).is_cuda:
-        input = input.cuda()
+    device = next(model.parameters()).device
+    input = input.to(device)
     model(input)  # forward
 
     for handle in registered_handles:
@@ -332,15 +334,15 @@ def compute_model_complexity(model, input_size, verbose=False, only_conv_linear=
 
     if verbose:
         num_udscore = 55
-        print("  {}".format("-" * num_udscore))
-        print(f"  Model complexity with input size {input_size}")
-        print("  {}".format("-" * num_udscore))
+        logger.info("  %s", "-" * num_udscore)
+        logger.info("  Model complexity with input size %s", input_size)
+        logger.info("  %s", "-" * num_udscore)
         for class_name in per_module_params:
             params = int(np.sum(per_module_params[class_name]))
             flops = int(np.sum(per_module_flops[class_name]))
-            print(f"  {class_name} (params={params:,}, flops={flops:,})")
-        print("  {}".format("-" * num_udscore))
-        print(f"  Total (params={total_params:,}, flops={total_flops:,})")
-        print("  {}".format("-" * num_udscore))
+            logger.info("  %s (params=%s, flops=%s)", class_name, f"{params:,}", f"{flops:,}")
+        logger.info("  %s", "-" * num_udscore)
+        logger.info("  Total (params=%s, flops=%s)", f"{total_params:,}", f"{total_flops:,}")
+        logger.info("  %s", "-" * num_udscore)
 
     return total_params, total_flops

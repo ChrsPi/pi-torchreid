@@ -2,7 +2,7 @@ import glob
 import os.path as osp
 import warnings
 
-from torchreid.utils import read_json, write_json
+from torchreid.utils import logger, read_json, write_json
 
 from ..dataset import VideoDataset
 
@@ -53,9 +53,9 @@ class DukeMTMCVidReID(VideoDataset):
             split = read_json(json_path)
             return split["tracklets"]
 
-        print("=> Generating split json file (** this might take a while **)")
+        logger.info("=> Generating split json file (** this might take a while **)")
         pdirs = glob.glob(osp.join(dir_path, "*"))  # avoid .DS_Store
-        print(f'Processing "{dir_path}" with {len(pdirs)} person identities')
+        logger.info('Processing "%s" with %s person identities', dir_path, len(pdirs))
 
         pid_container = set()
         for pdir in pdirs:
@@ -95,7 +95,7 @@ class DukeMTMCVidReID(VideoDataset):
                 img_paths = tuple(img_paths)
                 tracklets.append((img_paths, pid, camid))
 
-        print(f"Saving split to {json_path}")
+        logger.info("Saving split to %s", json_path)
         split_dict = {"tracklets": tracklets}
         write_json(split_dict, json_path)
 
