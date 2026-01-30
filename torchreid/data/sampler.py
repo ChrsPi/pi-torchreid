@@ -37,9 +37,7 @@ class RandomIdentitySampler(Sampler):
             self.index_dic[pid].append(index)
         self.pids = list(self.index_dic.keys())
         if len(self.pids) < self.num_pids_per_batch:
-            raise ValueError(
-                f"Not enough identities to sample: have {len(self.pids)}, need {self.num_pids_per_batch}"
-            )
+            raise ValueError(f"Not enough identities to sample: have {len(self.pids)}, need {self.num_pids_per_batch}")
 
         # estimate number of examples in an epoch
         # TODO: improve precision

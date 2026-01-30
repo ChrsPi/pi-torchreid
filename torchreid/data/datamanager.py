@@ -68,9 +68,7 @@ class DataManager:
         """Returns the number of training cameras."""
         return self._num_train_cams
 
-    def fetch_test_loaders(
-        self, name: str
-    ) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
+    def fetch_test_loaders(self, name: str) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         """Returns query and gallery of a test dataset, each containing
         tuples of (img_path(s), pid, camid).
 

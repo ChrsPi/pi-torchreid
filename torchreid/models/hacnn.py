@@ -295,9 +295,7 @@ class HACNN(nn.Module):
 
     def forward(self, x):
         if x.size(2) != 160 or x.size(3) != 64:
-            raise ValueError(
-                f"Input size does not match, expected (160, 64) but got ({x.size(2)}, {x.size(3)})"
-            )
+            raise ValueError(f"Input size does not match, expected (160, 64) but got ({x.size(2)}, {x.size(3)})")
         x = self.conv(x)
 
         # ============== Block 1 ==============

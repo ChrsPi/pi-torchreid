@@ -81,9 +81,7 @@ class FeatureExtractor:
         model.eval()
 
         if verbose:
-            num_params, flops = compute_model_complexity(
-                model, (1, 3, image_size[0], image_size[1])
-            )
+            num_params, flops = compute_model_complexity(model, (1, 3, image_size[0], image_size[1]))
             logger.info("Model: %s", model_name)
             logger.info("- params: %s", f"{num_params:,}")
             logger.info("- flops: %s", f"{flops:,}")

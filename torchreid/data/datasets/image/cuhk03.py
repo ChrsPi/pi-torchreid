@@ -61,9 +61,7 @@ class CUHK03(ImageDataset):
 
         splits = read_json(split_path)
         if split_id >= len(splits):
-            raise RuntimeError(
-                f"Condition split_id ({split_id}) < len(splits) ({len(splits)}) is false"
-            )
+            raise RuntimeError(f"Condition split_id ({split_id}) < len(splits) ({len(splits)}) is false")
         split = splits[split_id]
 
         train = split["train"]

@@ -55,9 +55,7 @@ class iLIDS(ImageDataset):
             img_names = [osp.basename(path) for path in paths]
             num_imgs = len(img_names)
             if num_imgs != 476:
-                raise RuntimeError(
-                    f"There should be 476 images, but got {num_imgs}, please check the data"
-                )
+                raise RuntimeError(f"There should be 476 images, but got {num_imgs}, please check the data")
 
             # store image names
             # image naming format:
@@ -70,9 +68,7 @@ class iLIDS(ImageDataset):
             pids = list(pid_dict.keys())
             num_pids = len(pids)
             if num_pids != 119:
-                raise RuntimeError(
-                    f"There should be 119 identities, but got {num_pids}, please check the data"
-                )
+                raise RuntimeError(f"There should be 119 identities, but got {num_pids}, please check the data")
 
             num_train_pids = int(num_pids * 0.5)
 

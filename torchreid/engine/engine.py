@@ -446,9 +446,7 @@ class Engine:
         pids = data["pid"]
         return imgs, pids
 
-    def parse_data_for_eval(
-        self, data: dict[str, torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def parse_data_for_eval(self, data: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         imgs = data["img"]
         pids = data["pid"]
         camids = data["camid"]
