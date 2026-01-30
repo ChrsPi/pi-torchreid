@@ -149,7 +149,8 @@ class Xception(nn.Module):
             self.feature_dim = input_dim
             return None
 
-        assert isinstance(fc_dims, (list, tuple)), f"fc_dims must be either list or tuple, but got {type(fc_dims)}"
+        if not isinstance(fc_dims, (list, tuple)):
+            raise ValueError(f"fc_dims must be either list or tuple, but got {type(fc_dims)}")
 
         layers = []
         for dim in fc_dims:

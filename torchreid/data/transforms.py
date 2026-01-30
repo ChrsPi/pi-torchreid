@@ -6,6 +6,8 @@ from PIL import Image
 import torch
 from torchvision.transforms import ColorJitter, Compose, Normalize, RandomHorizontalFlip, Resize, ToTensor
 
+from torchreid.utils import logger
+
 
 class Random2DTranslation:
     """Randomly translates the input image with a probability.
@@ -120,7 +122,8 @@ class ColorAugmentation:
         self.eig_val = torch.Tensor([[0.2175, 0.0188, 0.0045]])
 
     def _check_input(self, tensor):
-        assert tensor.dim() == 3 and tensor.size(0) == 3
+        if tensor.dim() != 3 or tensor.size(0) != 3:
+            raise ValueError("Expected a 3D tensor with shape (3, H, W)")
 
     def __call__(self, tensor):
         if random.uniform(0, 1) > self.p:
@@ -249,47 +252,50 @@ def build_transforms(height, width, transforms="random_flip", norm_mean=None, no
         norm_std = [0.229, 0.224, 0.225]  # imagenet std
     normalize = Normalize(mean=norm_mean, std=norm_std)
 
-    print("Building train transforms ...")
+    logger.info("Building train transforms ...")
     transform_tr = []
 
-    print(f"+ resize to {height}x{width}")
+    logger.info("+ resize to %sx%s", height, width)
     transform_tr += [Resize((height, width))]
 
     if "random_flip" in transforms:
-        print("+ random flip")
+        logger.info("+ random flip")
         transform_tr += [RandomHorizontalFlip()]
 
     if "random_crop" in transforms:
-        print(
-            f"+ random crop (enlarge to {int(round(height * 1.125))}x{int(round(width * 1.125))} and "
-            f"crop {height}x{width})"
+        logger.info(
+            "+ random crop (enlarge to %sx%s and crop %sx%s)",
+            int(round(height * 1.125)),
+            int(round(width * 1.125)),
+            height,
+            width,
         )
         transform_tr += [Random2DTranslation(height, width)]
 
     if "random_patch" in transforms:
-        print("+ random patch")
+        logger.info("+ random patch")
         transform_tr += [RandomPatch()]
 
     if "color_jitter" in transforms:
-        print("+ color jitter")
+        logger.info("+ color jitter")
         transform_tr += [ColorJitter(brightness=0.2, contrast=0.15, saturation=0, hue=0)]
 
-    print("+ to torch tensor of range [0, 1]")
+    logger.info("+ to torch tensor of range [0, 1]")
     transform_tr += [ToTensor()]
 
-    print(f"+ normalization (mean={norm_mean}, std={norm_std})")
+    logger.info("+ normalization (mean=%s, std=%s)", norm_mean, norm_std)
     transform_tr += [normalize]
 
     if "random_erase" in transforms:
-        print("+ random erase")
+        logger.info("+ random erase")
         transform_tr += [RandomErasing(mean=norm_mean)]
 
     transform_tr = Compose(transform_tr)
 
-    print("Building test transforms ...")
-    print(f"+ resize to {height}x{width}")
-    print("+ to torch tensor of range [0, 1]")
-    print(f"+ normalization (mean={norm_mean}, std={norm_std})")
+    logger.info("Building test transforms ...")
+    logger.info("+ resize to %sx%s", height, width)
+    logger.info("+ to torch tensor of range [0, 1]")
+    logger.info("+ normalization (mean=%s, std=%s)", norm_mean, norm_std)
 
     transform_te = Compose(
         [

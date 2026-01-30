@@ -102,9 +102,9 @@ class TestColorAugmentation:
         assert result.shape == tensor.shape
 
         # Should fail with wrong dimensions
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             transform._check_input(torch.randn(1, 256, 128))
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             transform._check_input(torch.randn(3, 256))
 
 

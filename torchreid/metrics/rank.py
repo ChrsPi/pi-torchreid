@@ -3,6 +3,8 @@ import warnings
 
 import numpy as np
 
+from torchreid.utils.logging_config import logger
+
 try:
     from torchreid.metrics.rank_cylib.rank_cy import evaluate_cy
 
@@ -14,7 +16,14 @@ except ImportError:
     )
 
 
-def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
+def eval_cuhk03(
+    distmat: np.ndarray,
+    q_pids: np.ndarray,
+    g_pids: np.ndarray,
+    q_camids: np.ndarray,
+    g_camids: np.ndarray,
+    max_rank: int,
+) -> tuple[np.ndarray, float]:
     """Evaluation with cuhk03 metric
     Key: one image for each gallery identity is randomly sampled for each query identity.
     Random sampling is performed num_repeats times.
@@ -24,7 +33,7 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
     if num_g < max_rank:
         max_rank = num_g
-        print(f"Note: number of gallery samples is quite small, got {num_g}")
+        logger.info("Note: number of gallery samples is quite small, got %s", num_g)
 
     indices = np.argsort(distmat, axis=1)
     matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
@@ -78,7 +87,8 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         all_AP.append(AP)
         num_valid_q += 1.0
 
-    assert num_valid_q > 0, "Error: all query identities do not appear in gallery"
+    if num_valid_q <= 0:
+        raise RuntimeError("Error: all query identities do not appear in gallery")
 
     all_cmc = np.asarray(all_cmc).astype(np.float32)
     all_cmc = all_cmc.sum(0) / num_valid_q
@@ -87,7 +97,14 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
     return all_cmc, mAP
 
 
-def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
+def eval_market1501(
+    distmat: np.ndarray,
+    q_pids: np.ndarray,
+    g_pids: np.ndarray,
+    q_camids: np.ndarray,
+    g_camids: np.ndarray,
+    max_rank: int,
+) -> tuple[np.ndarray, float]:
     """Evaluation with market1501 metric
     Key: for each query identity, its gallery images from the same camera view are discarded.
     """
@@ -95,7 +112,7 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
     if num_g < max_rank:
         max_rank = num_g
-        print(f"Note: number of gallery samples is quite small, got {num_g}")
+        logger.info("Note: number of gallery samples is quite small, got %s", num_g)
 
     indices = np.argsort(distmat, axis=1)
     matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
@@ -136,7 +153,8 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
 
-    assert num_valid_q > 0, "Error: all query identities do not appear in gallery"
+    if num_valid_q <= 0:
+        raise RuntimeError("Error: all query identities do not appear in gallery")
 
     all_cmc = np.asarray(all_cmc).astype(np.float32)
     all_cmc = all_cmc.sum(0) / num_valid_q
@@ -145,14 +163,31 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
     return all_cmc, mAP
 
 
-def evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03):
+def evaluate_py(
+    distmat: np.ndarray,
+    q_pids: np.ndarray,
+    g_pids: np.ndarray,
+    q_camids: np.ndarray,
+    g_camids: np.ndarray,
+    max_rank: int,
+    use_metric_cuhk03: bool,
+) -> tuple[np.ndarray, float]:
     if use_metric_cuhk03:
         return eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
     else:
         return eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
 
 
-def evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, use_metric_cuhk03=False, use_cython=True):
+def evaluate_rank(
+    distmat: np.ndarray,
+    q_pids: np.ndarray,
+    g_pids: np.ndarray,
+    q_camids: np.ndarray,
+    g_camids: np.ndarray,
+    max_rank: int = 50,
+    use_metric_cuhk03: bool = False,
+    use_cython: bool = True,
+) -> tuple[np.ndarray, float]:
     """Evaluates CMC rank.
 
     Args:

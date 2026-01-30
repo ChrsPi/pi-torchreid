@@ -47,6 +47,8 @@ args = parser.parse_args()
 def main():
     data = load_pickle(args.data_path)
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     query_cam = data["query_cam"]
     query_label = data["query_label"]
     gallery_cam = data["gallery_cam"]
@@ -54,8 +56,8 @@ def main():
 
     gallery_feature = torch.FloatTensor(data["gallery_f"])
     query_feature = torch.FloatTensor(data["query_f"])
-    query_feature = query_feature.cuda()
-    gallery_feature = gallery_feature.cuda()
+    query_feature = query_feature.to(device)
+    gallery_feature = gallery_feature.to(device)
 
     indices = gnn_reranking(query_feature, gallery_feature, args.k1, args.k2)
     evaluate_ranking_list(indices, query_label, query_cam, gallery_label, gallery_cam)

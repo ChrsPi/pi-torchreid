@@ -115,7 +115,8 @@ class ResNetMid(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=last_stride)
 
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        assert fc_dims is not None
+        if fc_dims is None:
+            raise ValueError("fc_dims must not be None")
         self.fc_fusion = self._construct_fc_layer(fc_dims, 512 * block.expansion * 2)
         self.feature_dim += 512 * block.expansion
         self.classifier = nn.Linear(self.feature_dim, num_classes)
@@ -150,7 +151,8 @@ class ResNetMid(nn.Module):
             self.feature_dim = input_dim
             return None
 
-        assert isinstance(fc_dims, (list, tuple)), f"fc_dims must be either list or tuple, but got {type(fc_dims)}"
+        if not isinstance(fc_dims, (list, tuple)):
+            raise ValueError(f"fc_dims must be either list or tuple, but got {type(fc_dims)}")
 
         layers = []
         for dim in fc_dims:

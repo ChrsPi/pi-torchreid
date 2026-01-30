@@ -3,7 +3,7 @@ import os.path as osp
 
 from scipy.io import loadmat
 
-from torchreid.utils import read_json, write_json
+from torchreid.utils import logger, read_json, write_json
 
 from ..dataset import ImageDataset
 
@@ -59,7 +59,7 @@ class GRID(ImageDataset):
 
     def prepare_split(self):
         if not osp.exists(self.split_path):
-            print("Creating 10 random splits")
+            logger.info("Creating 10 random splits")
             split_mat = loadmat(self.split_mat_path)
             trainIdxAll = split_mat["trainIdxAll"][0]  # length = 10
             probe_img_paths = sorted(glob.glob(osp.join(self.probe_path, "*.jpeg")))
@@ -68,7 +68,8 @@ class GRID(ImageDataset):
             splits = []
             for split_idx in range(10):
                 train_idxs = trainIdxAll[split_idx][0][0][2][0].tolist()
-                assert len(train_idxs) == 125
+                if len(train_idxs) != 125:
+                    raise RuntimeError(f"Expected 125 training indices, got {len(train_idxs)}")
                 idx2label = {idx: label for label, idx in enumerate(train_idxs)}
 
                 train, query, gallery = [], [], []
@@ -103,6 +104,6 @@ class GRID(ImageDataset):
                 }
                 splits.append(split)
 
-            print(f"Totally {len(splits)} splits are created")
+            logger.info("Totally %s splits are created", len(splits))
             write_json(splits, self.split_path)
-            print(f"Split file saved to {self.split_path}")
+            logger.info("Split file saved to %s", self.split_path)

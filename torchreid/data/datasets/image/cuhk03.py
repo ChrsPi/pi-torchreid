@@ -1,6 +1,6 @@
 import os.path as osp
 
-from torchreid.utils import mkdir_if_missing, read_json, write_json
+from torchreid.utils import logger, mkdir_if_missing, read_json, write_json
 
 from ..dataset import ImageDataset
 
@@ -60,7 +60,10 @@ class CUHK03(ImageDataset):
             split_path = self.split_classic_det_json_path if cuhk03_classic_split else self.split_new_det_json_path
 
         splits = read_json(split_path)
-        assert split_id < len(splits), f"Condition split_id ({split_id}) < len(splits) ({len(splits)}) is false"
+        if split_id >= len(splits):
+            raise RuntimeError(
+                f"Condition split_id ({split_id}) < len(splits) ({len(splits)}) is false"
+            )
         split = splits[split_id]
 
         train = split["train"]
@@ -91,7 +94,7 @@ class CUHK03(ImageDataset):
         mkdir_if_missing(self.imgs_detected_dir)
         mkdir_if_missing(self.imgs_labeled_dir)
 
-        print(f'Extract image data from "{self.raw_mat_path}" and save as png')
+        logger.info('Extract image data from "%s" and save as png', self.raw_mat_path)
         mat = h5py.File(self.raw_mat_path, "r")
 
         def _deref(ref):
@@ -117,7 +120,7 @@ class CUHK03(ImageDataset):
             return img_paths
 
         def _extract_img(image_type):
-            print(f"Processing {image_type} images ...")
+            logger.info("Processing %s images ...", image_type)
             meta_data = []
             imgs_dir = self.imgs_detected_dir if image_type == "detected" else self.imgs_labeled_dir
             for campid, camp_ref in enumerate(mat[image_type][0]):
@@ -125,9 +128,10 @@ class CUHK03(ImageDataset):
                 num_pids = camp.shape[0]
                 for pid in range(num_pids):
                     img_paths = _process_images(camp[pid, :], campid, pid, imgs_dir)
-                    assert len(img_paths) > 0, f"campid{campid}-pid{pid} has no images"
+                    if len(img_paths) == 0:
+                        raise RuntimeError(f"campid{campid}-pid{pid} has no images")
                     meta_data.append((campid + 1, pid + 1, img_paths))
-                print(f"- done camera pair {campid + 1} with {num_pids} identities")
+                logger.info("- done camera pair %s with %s identities", campid + 1, num_pids)
             return meta_data
 
         meta_detected = _extract_img("detected")
@@ -152,7 +156,7 @@ class CUHK03(ImageDataset):
                     num_train_imgs += len(img_paths)
             return train, num_train_pids, num_train_imgs, test, num_test_pids, num_test_imgs
 
-        print("Creating classic splits (# = 20) ...")
+        logger.info("Creating classic splits (# = 20) ...")
         splits_classic_det, splits_classic_lab = [], []
         for split_ref in mat["testsets"][0]:
             test_split = _deref(split_ref).tolist()
@@ -223,7 +227,7 @@ class CUHK03(ImageDataset):
             gallery_info = _extract_set(filelist, pids, pid2label, gallery_idxs, img_dir, relabel=False)
             return train_info, query_info, gallery_info
 
-        print("Creating new split for detected images (767/700) ...")
+        logger.info("Creating new split for detected images (767/700) ...")
         train_info, query_info, gallery_info = _extract_new_split(
             loadmat(self.split_new_det_mat_path), self.imgs_detected_dir
         )
@@ -242,7 +246,7 @@ class CUHK03(ImageDataset):
         ]
         write_json(split, self.split_new_det_json_path)
 
-        print("Creating new split for labeled images (767/700) ...")
+        logger.info("Creating new split for labeled images (767/700) ...")
         train_info, query_info, gallery_info = _extract_new_split(
             loadmat(self.split_new_lab_mat_path), self.imgs_labeled_dir
         )

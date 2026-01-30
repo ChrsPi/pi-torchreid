@@ -36,7 +36,10 @@ class RandomIdentitySampler(Sampler):
             pid = items[1]
             self.index_dic[pid].append(index)
         self.pids = list(self.index_dic.keys())
-        assert len(self.pids) >= self.num_pids_per_batch
+        if len(self.pids) < self.num_pids_per_batch:
+            raise ValueError(
+                f"Not enough identities to sample: have {len(self.pids)}, need {self.num_pids_per_batch}"
+            )
 
         # estimate number of examples in an epoch
         # TODO: improve precision
@@ -108,7 +111,8 @@ class RandomDomainSampler(Sampler):
         # Make sure each domain can be assigned an equal number of images
         if n_domain is None or n_domain <= 0:
             n_domain = len(self.domains)
-        assert batch_size % n_domain == 0
+        if batch_size % n_domain != 0:
+            raise ValueError(f"batch_size={batch_size} must be divisible by n_domain={n_domain}")
         self.n_img_per_domain = batch_size // n_domain
 
         self.batch_size = batch_size
@@ -167,7 +171,8 @@ class RandomDatasetSampler(Sampler):
         # Make sure each dataset can be assigned an equal number of images
         if n_dataset is None or n_dataset <= 0:
             n_dataset = len(self.datasets)
-        assert batch_size % n_dataset == 0
+        if batch_size % n_dataset != 0:
+            raise ValueError(f"batch_size={batch_size} must be divisible by n_dataset={n_dataset}")
         self.n_img_per_dset = batch_size // n_dataset
 
         self.batch_size = batch_size
@@ -216,7 +221,8 @@ def build_train_sampler(
         num_datasets (int, optional): number of datasets to sample in a batch (when
             using ``RandomDatasetSampler``). Default is 1.
     """
-    assert train_sampler in AVAI_SAMPLERS, f"train_sampler must be one of {AVAI_SAMPLERS}, but got {train_sampler}"
+    if train_sampler not in AVAI_SAMPLERS:
+        raise ValueError(f"train_sampler must be one of {AVAI_SAMPLERS}, but got {train_sampler}")
 
     if train_sampler == "RandomIdentitySampler":
         sampler = RandomIdentitySampler(data_source, batch_size, num_instances)

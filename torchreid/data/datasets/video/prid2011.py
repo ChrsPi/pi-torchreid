@@ -58,7 +58,8 @@ class PRID2011(VideoDataset):
             if cam1:
                 person_dir = osp.join(self.cam_a_dir, dirname)
                 img_names = glob.glob(osp.join(person_dir, "*.png"))
-                assert len(img_names) > 0
+                if len(img_names) == 0:
+                    raise RuntimeError(f"No images found in {person_dir}")
                 img_names = tuple(img_names)
                 pid = dirname2pid[dirname]
                 tracklets.append((img_names, pid, 0))
@@ -66,7 +67,8 @@ class PRID2011(VideoDataset):
             if cam2:
                 person_dir = osp.join(self.cam_b_dir, dirname)
                 img_names = glob.glob(osp.join(person_dir, "*.png"))
-                assert len(img_names) > 0
+                if len(img_names) == 0:
+                    raise RuntimeError(f"No images found in {person_dir}")
                 img_names = tuple(img_names)
                 pid = dirname2pid[dirname]
                 tracklets.append((img_names, pid, 1))

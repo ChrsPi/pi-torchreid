@@ -21,6 +21,8 @@ import pickle
 import numpy as np
 import torch
 
+from torchreid.utils.logging_config import logger
+
 
 def load_pickle(pickle_path):
     with open(pickle_path, "rb") as f:
@@ -82,7 +84,13 @@ def evaluate_ranking_list(indices, query_label, query_cam, gallery_label, galler
 
     CMC = CMC.astype(np.float32)
     CMC = CMC / len(query_label)  # average CMC
-    print(f"Rank@1:{CMC[0]:f} Rank@5:{CMC[4]:f} Rank@10:{CMC[9]:f} mAP:{ap / len(query_label):f}")
+    logger.info(
+        "Rank@1:%f Rank@5:%f Rank@10:%f mAP:%f",
+        CMC[0],
+        CMC[4],
+        CMC[9],
+        ap / len(query_label),
+    )
 
 
 def evaluate(index, ql, qc, gl, gc):

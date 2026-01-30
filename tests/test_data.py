@@ -138,5 +138,5 @@ class TestSamplers:
     def test_build_train_sampler_invalid(self):
         """Test error handling for invalid sampler names."""
         data_source = [("path1.jpg", 0, 0, 0)]
-        with pytest.raises(AssertionError, match="train_sampler must be one of"):
+        with pytest.raises(ValueError, match="train_sampler must be one of"):
             build_train_sampler(data_source, train_sampler="InvalidSampler", batch_size=1)

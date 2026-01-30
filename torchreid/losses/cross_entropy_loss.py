@@ -25,14 +25,20 @@ class CrossEntropyLoss(nn.Module):
         label_smooth (bool, optional): whether to apply label smoothing. Default is True.
     """
 
-    def __init__(self, num_classes, eps=0.1, use_gpu=True, label_smooth=True):
+    def __init__(
+        self,
+        num_classes: int,
+        eps: float = 0.1,
+        use_gpu: bool = True,
+        label_smooth: bool = True,
+    ) -> None:
         super().__init__()
         self.num_classes = num_classes
         self.eps = eps if label_smooth else 0
         self.use_gpu = use_gpu
         self.logsoftmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, inputs, targets):
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
         Args:
             inputs (torch.Tensor): prediction matrix (before softmax) with
@@ -42,8 +48,8 @@ class CrossEntropyLoss(nn.Module):
         """
         log_probs = self.logsoftmax(inputs)
         zeros = torch.zeros(log_probs.size())
-        targets = zeros.scatter_(1, targets.unsqueeze(1).data.cpu(), 1)
+        targets = zeros.scatter_(1, targets.unsqueeze(1).detach().to("cpu"), 1)
         if self.use_gpu:
-            targets = targets.cuda()
+            targets = targets.to(inputs.device)
         targets = (1 - self.eps) * targets + self.eps / self.num_classes
         return (-targets * log_probs).mean(0).sum()

@@ -3,7 +3,7 @@ import os.path as osp
 
 from scipy.io import loadmat
 
-from torchreid.utils import read_json, write_json
+from torchreid.utils import logger, read_json, write_json
 
 from ..dataset import VideoDataset
 
@@ -57,13 +57,15 @@ class iLIDSVID(VideoDataset):
 
     def prepare_split(self):
         if not osp.exists(self.split_path):
-            print("Creating splits ...")
+            logger.info("Creating splits ...")
             mat_split_data = loadmat(self.split_mat_path)["ls_set"]
 
             num_splits = mat_split_data.shape[0]
             num_total_ids = mat_split_data.shape[1]
-            assert num_splits == 10
-            assert num_total_ids == 300
+            if num_splits != 10:
+                raise RuntimeError(f"Expected 10 splits, got {num_splits}")
+            if num_total_ids != 300:
+                raise RuntimeError(f"Expected 300 identities, got {num_total_ids}")
             num_ids_each = num_total_ids // 2
 
             # pids in mat_split_data are indices, so we need to transform them
@@ -75,7 +77,8 @@ class iLIDSVID(VideoDataset):
             person_cam2_dirs = [osp.basename(item) for item in person_cam2_dirs]
 
             # make sure persons in one camera view can be found in the other camera view
-            assert set(person_cam1_dirs) == set(person_cam2_dirs)
+            if set(person_cam1_dirs) != set(person_cam2_dirs):
+                raise RuntimeError("Mismatch between camera directories")
 
             splits = []
             for i_split in range(num_splits):
@@ -93,8 +96,8 @@ class iLIDSVID(VideoDataset):
                 split = {"train": train_dirs, "test": test_dirs}
                 splits.append(split)
 
-            print(f"Totally {len(splits)} splits are created, following Wang et al. ECCV'14")
-            print(f"Split file is saved to {self.split_path}")
+            logger.info("Totally %s splits are created, following Wang et al. ECCV'14", len(splits))
+            logger.info("Split file is saved to %s", self.split_path)
             write_json(splits, self.split_path)
 
     def process_data(self, dirnames, cam1=True, cam2=True):
@@ -105,7 +108,8 @@ class iLIDSVID(VideoDataset):
             if cam1:
                 person_dir = osp.join(self.cam_1_path, dirname)
                 img_names = glob.glob(osp.join(person_dir, "*.png"))
-                assert len(img_names) > 0
+                if len(img_names) == 0:
+                    raise RuntimeError(f"No images found in {person_dir}")
                 img_names = tuple(img_names)
                 pid = dirname2pid[dirname]
                 tracklets.append((img_names, pid, 0))
@@ -113,7 +117,8 @@ class iLIDSVID(VideoDataset):
             if cam2:
                 person_dir = osp.join(self.cam_2_path, dirname)
                 img_names = glob.glob(osp.join(person_dir, "*.png"))
-                assert len(img_names) > 0
+                if len(img_names) == 0:
+                    raise RuntimeError(f"No images found in {person_dir}")
                 img_names = tuple(img_names)
                 pid = dirname2pid[dirname]
                 tracklets.append((img_names, pid, 1))

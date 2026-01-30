@@ -4,7 +4,7 @@ import zipfile
 
 import numpy as np
 
-from torchreid.utils import read_json, write_json
+from torchreid.utils import logger, read_json, write_json
 
 from ..dataset import ImageDataset
 
@@ -62,7 +62,7 @@ class CUHK01(ImageDataset):
 
     def extract_file(self):
         if not osp.exists(self.campus_dir):
-            print("Extracting files")
+            logger.info("Extracting files")
             zip_ref = zipfile.ZipFile(self.zip_path, "r")
             zip_ref.extractall(self.dataset_dir)
             zip_ref.close()
@@ -74,7 +74,7 @@ class CUHK01(ImageDataset):
         view and camera 3&4 are considered the same view.
         """
         if not osp.exists(self.split_path):
-            print("Creating 10 random splits of train ids and test ids")
+            logger.info("Creating 10 random splits of train ids and test ids")
             img_paths = sorted(glob.glob(osp.join(self.campus_dir, "*.png")))
             img_list = []
             pid_container = set()
@@ -128,6 +128,6 @@ class CUHK01(ImageDataset):
                 }
                 splits.append(split)
 
-            print(f"Totally {len(splits)} splits are created")
+            logger.info("Totally %s splits are created", len(splits))
             write_json(splits, self.split_path)
-            print(f"Split file saved to {self.split_path}")
+            logger.info("Split file saved to %s", self.split_path)

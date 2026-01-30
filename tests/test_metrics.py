@@ -187,13 +187,13 @@ class TestComputeDistanceMatrix:
         # Test 1-D input (should fail)
         qf = torch.randn(10)
         gf = torch.randn(100, 512)
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             metrics.compute_distance_matrix(qf, gf)
 
         # Test dimension mismatch
         qf = torch.randn(10, 512)
         gf = torch.randn(100, 256)
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             metrics.compute_distance_matrix(qf, gf)
 
     def test_compute_distance_matrix_same_features(self):

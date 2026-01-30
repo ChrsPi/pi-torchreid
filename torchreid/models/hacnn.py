@@ -115,7 +115,8 @@ class ChannelAttn(nn.Module):
 
     def __init__(self, in_channels, reduction_rate=16):
         super().__init__()
-        assert in_channels % reduction_rate == 0
+        if in_channels % reduction_rate != 0:
+            raise ValueError("in_channels must be divisible by reduction_rate")
         self.conv1 = ConvBlock(in_channels, in_channels // reduction_rate, 1)
         self.conv2 = ConvBlock(in_channels // reduction_rate, in_channels, 1)
 
@@ -289,13 +290,14 @@ class HACNN(nn.Module):
         theta[:, :, :2] = scale_factors
         theta[:, :, -1] = theta_i
         if self.use_gpu:
-            theta = theta.cuda()
+            theta = theta.to(theta_i.device)
         return theta
 
     def forward(self, x):
-        assert x.size(2) == 160 and x.size(3) == 64, (
-            f"Input size does not match, expected (160, 64) but got ({x.size(2)}, {x.size(3)})"
-        )
+        if x.size(2) != 160 or x.size(3) != 64:
+            raise ValueError(
+                f"Input size does not match, expected (160, 64) but got ({x.size(2)}, {x.size(3)})"
+            )
         x = self.conv(x)
 
         # ============== Block 1 ==============

@@ -21,8 +21,10 @@ from torchreid.utils import (
     collect_env_info,
     compute_model_complexity,
     load_pretrained_weights,
+    logger,
     resume_from_checkpoint,
     set_random_seed,
+    setup_logger,
 )
 
 
@@ -125,18 +127,20 @@ def main():
 
     log_name = "test.log" if cfg.test.evaluate else "train.log"
     log_name += time.strftime("-%Y-%m-%d-%H-%M-%S")
-    sys.stdout = Logger(osp.join(cfg.data.save_dir, log_name))
+    log_path = osp.join(cfg.data.save_dir, log_name)
+    sys.stdout = Logger(log_path)
+    setup_logger(log_file=log_path)
 
-    print(f"Show configuration\n{cfg}\n")
-    print("Collecting env info ...")
-    print(f"** System info **\n{collect_env_info()}\n")
+    logger.info("Show configuration\n%s\n", cfg)
+    logger.info("Collecting env info ...")
+    logger.info("** System info **\n%s\n", collect_env_info())
 
     if cfg.use_gpu:
         torch.backends.cudnn.benchmark = True
 
     datamanager = build_datamanager(cfg)
 
-    print(f"Building model: {cfg.model.name}")
+    logger.info("Building model: %s", cfg.model.name)
     model = torchreid.models.build_model(
         name=cfg.model.name,
         num_classes=datamanager.num_train_pids,
@@ -145,7 +149,7 @@ def main():
         use_gpu=cfg.use_gpu,
     )
     num_params, flops = compute_model_complexity(model, (1, 3, cfg.data.height, cfg.data.width))
-    print(f"Model complexity: params={num_params:,} flops={flops:,}")
+    logger.info("Model complexity: params=%s flops=%s", f"{num_params:,}", f"{flops:,}")
 
     if cfg.model.load_weights and check_isfile(cfg.model.load_weights):
         load_pretrained_weights(model, cfg.model.load_weights)
@@ -161,7 +165,7 @@ def main():
             cfg.model.resume, model, optimizer=optimizer, scheduler=scheduler
         )
 
-    print(f"Building {cfg.loss.name}-engine for {cfg.data.type}-reid")
+    logger.info("Building %s-engine for %s-reid", cfg.loss.name, cfg.data.type)
     engine = build_engine(cfg, datamanager, model, optimizer, scheduler)
     engine.run(**engine_run_kwargs(cfg))
 

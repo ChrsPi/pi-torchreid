@@ -4,6 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from torchreid.utils.logging_config import logger
+
 __all__ = ["osnet_x1_0", "osnet_x0_75", "osnet_x0_5", "osnet_x0_25", "osnet_ibn_x1_0"]
 
 pretrained_urls = {
@@ -214,8 +216,10 @@ class OSNet(nn.Module):
     def __init__(self, num_classes, blocks, layers, channels, feature_dim=512, loss="softmax", IN=False, **kwargs):
         super().__init__()
         num_blocks = len(blocks)
-        assert num_blocks == len(layers)
-        assert num_blocks == len(channels) - 1
+        if num_blocks != len(layers):
+            raise ValueError("num_blocks must match the length of layers")
+        if num_blocks != len(channels) - 1:
+            raise ValueError("num_blocks must be len(channels) - 1")
         self.loss = loss
         self.feature_dim = feature_dim
 
@@ -374,9 +378,12 @@ def init_pretrained_weights(model, key=""):
             stacklevel=2,
         )
     else:
-        print(f'Successfully loaded imagenet pretrained weights from "{cached_file}"')
+        logger.info('Successfully loaded imagenet pretrained weights from "%s"', cached_file)
         if len(discarded_layers) > 0:
-            print(f"** The following layers are discarded due to unmatched keys or layer size: {discarded_layers}")
+            logger.info(
+                "** The following layers are discarded due to unmatched keys or layer size: %s",
+                discarded_layers,
+            )
 
 
 ##########

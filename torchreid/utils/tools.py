@@ -12,6 +12,8 @@ import PIL
 from PIL import Image
 import torch
 
+from .logging_config import logger
+
 __all__ = [
     "mkdir_if_missing",
     "check_isfile",
@@ -80,8 +82,8 @@ def download_url(url, dst):
     """
     import urllib.request
 
-    print(f'* url="{url}"')
-    print(f'* destination="{dst}"')
+    logger.info('* url="%s"', url)
+    logger.info('* destination="%s"', dst)
 
     def _reporthook(count, block_size, total_size):
         global start_time
@@ -118,7 +120,7 @@ def read_image(path):
             img = Image.open(path).convert("RGB")
             got_img = True
         except OSError:
-            print(f'IOError incurred when reading "{path}". Will redo. Don\'t worry. Just chill.')
+            logger.warning('IOError incurred when reading "%s". Will redo. Don\'t worry. Just chill.', path)
     return img
 
 

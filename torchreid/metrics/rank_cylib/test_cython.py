@@ -3,6 +3,8 @@ import sys
 import timeit
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)) + "/../../..")
+from torchreid.utils.logging_config import logger
+
 """
 Test the speed of cython-based evaluation code. The speed improvements
 can be much bigger when using the real reid data, which contains a larger
@@ -13,7 +15,7 @@ Note: you might encounter the following error:
 This is normal because the inputs are random numbers. Just try again.
 """
 
-print("*** Compare running time ***")
+logger.info("*** Compare running time ***")
 
 setup = """
 import sys
@@ -31,7 +33,7 @@ q_camids = np.random.randint(0, 5, size=num_q)
 g_camids = np.random.randint(0, 5, size=num_g)
 """
 
-print("=> Using market1501's metric")
+logger.info("=> Using market1501's metric")
 pytime = timeit.timeit(
     "metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)",
     setup=setup,
@@ -42,11 +44,11 @@ cytime = timeit.timeit(
     setup=setup,
     number=20,
 )
-print(f"Python time: {pytime} s")
-print(f"Cython time: {cytime} s")
-print(f"Cython is {pytime / cytime} times faster than python\n")
+logger.info("Python time: %s s", pytime)
+logger.info("Cython time: %s s", cytime)
+logger.info("Cython is %s times faster than python\n", pytime / cytime)
 
-print("=> Using cuhk03's metric")
+logger.info("=> Using cuhk03's metric")
 pytime = timeit.timeit(
     "metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03=True, use_cython=False)",
     setup=setup,
@@ -57,9 +59,9 @@ cytime = timeit.timeit(
     setup=setup,
     number=20,
 )
-print(f"Python time: {pytime} s")
-print(f"Cython time: {cytime} s")
-print(f"Cython is {pytime / cytime} times faster than python\n")
+logger.info("Python time: %s s", pytime)
+logger.info("Cython time: %s s", cytime)
+logger.info("Cython is %s times faster than python\n", pytime / cytime)
 """
 print("=> Check precision")
 

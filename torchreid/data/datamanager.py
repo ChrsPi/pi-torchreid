@@ -1,8 +1,11 @@
+from collections.abc import Sequence
+
 import torch
 
 from torchreid.data.datasets import init_image_dataset, init_video_dataset
 from torchreid.data.sampler import build_train_sampler
 from torchreid.data.transforms import build_transforms
+from torchreid.utils import logger
 
 
 class DataManager:
@@ -23,15 +26,15 @@ class DataManager:
 
     def __init__(
         self,
-        sources=None,
-        targets=None,
-        height=256,
-        width=128,
-        transforms="random_flip",
-        norm_mean=None,
-        norm_std=None,
-        use_gpu=False,
-    ):
+        sources: str | Sequence[str] | None = None,
+        targets: str | Sequence[str] | None = None,
+        height: int = 256,
+        width: int = 128,
+        transforms: str | Sequence[str] = "random_flip",
+        norm_mean: Sequence[float] | None = None,
+        norm_std: Sequence[float] | None = None,
+        use_gpu: bool = False,
+    ) -> None:
         self.sources = sources
         self.targets = targets
         self.height = height
@@ -56,16 +59,18 @@ class DataManager:
         self.use_gpu = torch.cuda.is_available() and use_gpu
 
     @property
-    def num_train_pids(self):
+    def num_train_pids(self) -> int:
         """Returns the number of training person identities."""
         return self._num_train_pids
 
     @property
-    def num_train_cams(self):
+    def num_train_cams(self) -> int:
         """Returns the number of training cameras."""
         return self._num_train_cams
 
-    def fetch_test_loaders(self, name):
+    def fetch_test_loaders(
+        self, name: str
+    ) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         """Returns query and gallery of a test dataset, each containing
         tuples of (img_path(s), pid, camid).
 
@@ -76,7 +81,7 @@ class DataManager:
         gallery_loader = self.test_dataset[name]["gallery"]
         return query_loader, gallery_loader
 
-    def preprocess_pil_img(self, img):
+    def preprocess_pil_img(self, img: object) -> torch.Tensor:
         """Transforms a PIL image to torch tensor for testing."""
         return self.transform_te(img)
 
@@ -148,31 +153,31 @@ class ImageDataManager(DataManager):
 
     def __init__(
         self,
-        root="",
-        sources=None,
-        targets=None,
-        height=256,
-        width=128,
-        transforms="random_flip",
-        k_tfm=1,
-        norm_mean=None,
-        norm_std=None,
-        use_gpu=True,
-        split_id=0,
-        combineall=False,
-        load_train_targets=False,
-        batch_size_train=32,
-        batch_size_test=32,
-        workers=4,
-        num_instances=4,
-        num_cams=1,
-        num_datasets=1,
-        train_sampler="RandomSampler",
-        train_sampler_t="RandomSampler",
-        cuhk03_labeled=False,
-        cuhk03_classic_split=False,
-        market1501_500k=False,
-    ):
+        root: str = "",
+        sources: str | Sequence[str] | None = None,
+        targets: str | Sequence[str] | None = None,
+        height: int = 256,
+        width: int = 128,
+        transforms: str | Sequence[str] = "random_flip",
+        k_tfm: int = 1,
+        norm_mean: Sequence[float] | None = None,
+        norm_std: Sequence[float] | None = None,
+        use_gpu: bool = True,
+        split_id: int = 0,
+        combineall: bool = False,
+        load_train_targets: bool = False,
+        batch_size_train: int = 32,
+        batch_size_test: int = 32,
+        workers: int = 4,
+        num_instances: int = 4,
+        num_cams: int = 1,
+        num_datasets: int = 1,
+        train_sampler: str = "RandomSampler",
+        train_sampler_t: str = "RandomSampler",
+        cuhk03_labeled: bool = False,
+        cuhk03_classic_split: bool = False,
+        market1501_500k: bool = False,
+    ) -> None:
         super().__init__(
             sources=sources,
             targets=targets,
@@ -184,7 +189,7 @@ class ImageDataManager(DataManager):
             use_gpu=use_gpu,
         )
 
-        print("=> Loading train (source) dataset")
+        logger.info("=> Loading train (source) dataset")
         trainset = []
         for name in self.sources:
             trainset_ = init_image_dataset(
@@ -225,11 +230,10 @@ class ImageDataManager(DataManager):
         self.train_loader_t = None
         if load_train_targets:
             # check if sources and targets are identical
-            assert len(set(self.sources) & set(self.targets)) == 0, (
-                f"sources={self.sources} and targets={self.targets} must not have overlap"
-            )
+            if len(set(self.sources) & set(self.targets)) != 0:
+                raise ValueError(f"sources={self.sources} and targets={self.targets} must not have overlap")
 
-            print("=> Loading train (target) dataset")
+            logger.info("=> Loading train (target) dataset")
             trainset_t = []
             for name in self.targets:
                 trainset_t_ = init_image_dataset(
@@ -264,7 +268,7 @@ class ImageDataManager(DataManager):
                 drop_last=True,
             )
 
-        print("=> Loading test (target) dataset")
+        logger.info("=> Loading test (target) dataset")
         self.test_loader = {name: {"query": None, "gallery": None} for name in self.targets}
         self.test_dataset = {name: {"query": None, "gallery": None} for name in self.targets}
 
@@ -315,18 +319,18 @@ class ImageDataManager(DataManager):
             self.test_dataset[name]["query"] = queryset.query
             self.test_dataset[name]["gallery"] = galleryset.gallery
 
-        print("\n")
-        print("  **************** Summary ****************")
-        print(f"  source            : {self.sources}")
-        print(f"  # source datasets : {len(self.sources)}")
-        print(f"  # source ids      : {self.num_train_pids}")
-        print(f"  # source images   : {len(trainset)}")
-        print(f"  # source cameras  : {self.num_train_cams}")
+        logger.info("")
+        logger.info("  **************** Summary ****************")
+        logger.info("  source            : %s", self.sources)
+        logger.info("  # source datasets : %s", len(self.sources))
+        logger.info("  # source ids      : %s", self.num_train_pids)
+        logger.info("  # source images   : %s", len(trainset))
+        logger.info("  # source cameras  : %s", self.num_train_cams)
         if load_train_targets:
-            print(f"  # target images   : {len(trainset_t)} (unlabeled)")
-        print(f"  target            : {self.targets}")
-        print("  *****************************************")
-        print("\n")
+            logger.info("  # target images   : %s (unlabeled)", len(trainset_t))
+        logger.info("  target            : %s", self.targets)
+        logger.info("  *****************************************")
+        logger.info("")
 
 
 class VideoDataManager(DataManager):
@@ -393,27 +397,27 @@ class VideoDataManager(DataManager):
 
     def __init__(
         self,
-        root="",
-        sources=None,
-        targets=None,
-        height=256,
-        width=128,
-        transforms="random_flip",
-        norm_mean=None,
-        norm_std=None,
-        use_gpu=True,
-        split_id=0,
-        combineall=False,
-        batch_size_train=3,
-        batch_size_test=3,
-        workers=4,
-        num_instances=4,
-        num_cams=1,
-        num_datasets=1,
-        train_sampler="RandomSampler",
-        seq_len=15,
-        sample_method="evenly",
-    ):
+        root: str = "",
+        sources: str | Sequence[str] | None = None,
+        targets: str | Sequence[str] | None = None,
+        height: int = 256,
+        width: int = 128,
+        transforms: str | Sequence[str] = "random_flip",
+        norm_mean: Sequence[float] | None = None,
+        norm_std: Sequence[float] | None = None,
+        use_gpu: bool = True,
+        split_id: int = 0,
+        combineall: bool = False,
+        batch_size_train: int = 3,
+        batch_size_test: int = 3,
+        workers: int = 4,
+        num_instances: int = 4,
+        num_cams: int = 1,
+        num_datasets: int = 1,
+        train_sampler: str = "RandomSampler",
+        seq_len: int = 15,
+        sample_method: str = "evenly",
+    ) -> None:
         super().__init__(
             sources=sources,
             targets=targets,
@@ -425,7 +429,7 @@ class VideoDataManager(DataManager):
             use_gpu=use_gpu,
         )
 
-        print("=> Loading train (source) dataset")
+        logger.info("=> Loading train (source) dataset")
         trainset = []
         for name in self.sources:
             trainset_ = init_video_dataset(
@@ -463,7 +467,7 @@ class VideoDataManager(DataManager):
             drop_last=True,
         )
 
-        print("=> Loading test (target) dataset")
+        logger.info("=> Loading test (target) dataset")
         self.test_loader = {name: {"query": None, "gallery": None} for name in self.targets}
         self.test_dataset = {name: {"query": None, "gallery": None} for name in self.targets}
 
@@ -512,13 +516,13 @@ class VideoDataManager(DataManager):
             self.test_dataset[name]["query"] = queryset.query
             self.test_dataset[name]["gallery"] = galleryset.gallery
 
-        print("\n")
-        print("  **************** Summary ****************")
-        print(f"  source             : {self.sources}")
-        print(f"  # source datasets  : {len(self.sources)}")
-        print(f"  # source ids       : {self.num_train_pids}")
-        print(f"  # source tracklets : {len(trainset)}")
-        print(f"  # source cameras   : {self.num_train_cams}")
-        print(f"  target             : {self.targets}")
-        print("  *****************************************")
-        print("\n")
+        logger.info("")
+        logger.info("  **************** Summary ****************")
+        logger.info("  source             : %s", self.sources)
+        logger.info("  # source datasets  : %s", len(self.sources))
+        logger.info("  # source ids       : %s", self.num_train_pids)
+        logger.info("  # source tracklets : %s", len(trainset))
+        logger.info("  # source cameras   : %s", self.num_train_cams)
+        logger.info("  target             : %s", self.targets)
+        logger.info("  *****************************************")
+        logger.info("")

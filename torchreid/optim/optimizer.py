@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 import warnings
 
 import torch
@@ -9,20 +10,20 @@ AVAI_OPTIMS = ["adam", "amsgrad", "sgd", "rmsprop", "radam"]
 
 
 def build_optimizer(
-    model,
-    optim="adam",
-    lr=0.0003,
-    weight_decay=5e-04,
-    momentum=0.9,
-    sgd_dampening=0,
-    sgd_nesterov=False,
-    rmsprop_alpha=0.99,
-    adam_beta1=0.9,
-    adam_beta2=0.99,
-    staged_lr=False,
-    new_layers="",
-    base_lr_mult=0.1,
-):
+    model: nn.Module,
+    optim: str = "adam",
+    lr: float = 0.0003,
+    weight_decay: float = 5e-04,
+    momentum: float = 0.9,
+    sgd_dampening: float = 0,
+    sgd_nesterov: bool = False,
+    rmsprop_alpha: float = 0.99,
+    adam_beta1: float = 0.9,
+    adam_beta2: float = 0.99,
+    staged_lr: bool = False,
+    new_layers: str | Sequence[str] | None = "",
+    base_lr_mult: float = 0.1,
+) -> torch.optim.Optimizer:
     """A function wrapper for building an optimizer.
 
     Args:

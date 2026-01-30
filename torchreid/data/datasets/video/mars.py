@@ -69,7 +69,8 @@ class Mars(VideoDataset):
         return names
 
     def process_data(self, names, meta_data, home_dir=None, relabel=False, min_seq_len=0):
-        assert home_dir in ["bbox_train", "bbox_test"]
+        if home_dir not in ["bbox_train", "bbox_test"]:
+            raise RuntimeError(f"home_dir must be 'bbox_train' or 'bbox_test', got {home_dir}")
         num_tracklets = meta_data.shape[0]
         pid_list = list(set(meta_data[:, 2].tolist()))
 
@@ -82,7 +83,8 @@ class Mars(VideoDataset):
             start_index, end_index, pid, camid = data
             if pid == -1:
                 continue  # junk images are just ignored
-            assert 1 <= camid <= 6
+            if not (1 <= camid <= 6):
+                raise RuntimeError(f"camid must be between 1 and 6, got {camid}")
             if relabel:
                 pid = pid2label[pid]
             camid -= 1  # index starts from 0
@@ -90,11 +92,13 @@ class Mars(VideoDataset):
 
             # make sure image names correspond to the same person
             pnames = [img_name[:4] for img_name in img_names]
-            assert len(set(pnames)) == 1, "Error: a single tracklet contains different person images"
+            if len(set(pnames)) != 1:
+                raise RuntimeError("Error: a single tracklet contains different person images")
 
             # make sure all images are captured under the same camera
             camnames = [img_name[5] for img_name in img_names]
-            assert len(set(camnames)) == 1, "Error: images are captured under different cameras!"
+            if len(set(camnames)) != 1:
+                raise RuntimeError("Error: images are captured under different cameras!")
 
             # append image names with directory information
             img_paths = [osp.join(self.dataset_dir, home_dir, img_name[:4], img_name) for img_name in img_names]

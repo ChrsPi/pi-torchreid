@@ -1,4 +1,13 @@
-def accuracy(output, target, topk=(1,)):
+from collections.abc import Sequence
+
+import torch
+
+
+def accuracy(
+    output: torch.Tensor,
+    target: torch.Tensor,
+    topk: Sequence[int] = (1,),
+) -> list[torch.Tensor]:
     """Computes the accuracy over the k top predictions for
     the specified values of k.
 

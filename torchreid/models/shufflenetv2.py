@@ -16,7 +16,7 @@ model_urls = {
 
 
 def channel_shuffle(x, groups):
-    batchsize, num_channels, height, width = x.data.size()
+    batchsize, num_channels, height, width = x.size()
     channels_per_group = num_channels // groups
 
     # reshape
@@ -39,7 +39,8 @@ class InvertedResidual(nn.Module):
         self.stride = stride
 
         branch_features = oup // 2
-        assert (self.stride != 1) or (inp == branch_features << 1)
+        if self.stride == 1 and inp != branch_features << 1:
+            raise ValueError("inp must be equal to branch_features * 2 when stride is 1")
 
         if self.stride > 1:
             self.branch1 = nn.Sequential(
