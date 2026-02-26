@@ -34,6 +34,34 @@ Choose an optimizer/lr_scheduler
 Please refer to the source code of ``build_optimizer``/``build_lr_scheduler`` in :ref:`torchreid_optim` for details.
 
 
+Configure augmentation
+----------------------
+The augmentation stack is configured through ``data.*`` and ``aug.*`` and built by the torchvision v2 backend.
+
+- Train-time transform names: ``data.transforms``
+  - Supported names: ``random_flip``, ``random_crop``, ``color_jitter``, ``random_erase``, ``random_patch``, ``rand_augment``
+- Detailed train params: ``aug.train.<name>.*``
+- Evaluation degradations: ``aug.test.<name>.*`` (e.g. ``jpeg``, ``resolution``, ``gaussian_blur``, ``gaussian_noise``)
+
+Important behavior:
+
+- ``data.transforms=[]`` disables stochastic train transforms (no implicit fallback to ``random_flip``).
+- ``aug.disable_stochastic=True`` disables stochastic train transforms even when listed in ``data.transforms``.
+- ``data.norm_mean`` and ``data.norm_std`` are final normalization values and override ``aug.normalize.mean/std``.
+
+Example overrides from CLI:
+
+.. code-block:: shell
+
+    uv run python scripts/main.py \
+    --config-file configs/im_osnet_x1_0_softmax_256x128_amsgrad_cosine.yaml \
+    --root $PATH_TO_DATA \
+    aug.disable_stochastic True \
+    data.transforms "[]" \
+    aug.test.jpeg.enabled True \
+    aug.test.jpeg.quality 30
+
+
 Resume training
 ----------------
 Suppose the checkpoint is saved in "log/resnet50/model.pth.tar-30", you can do

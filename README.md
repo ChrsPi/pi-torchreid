@@ -248,6 +248,33 @@ In "deep-person-reid/scripts/", we provide a unified interface to train and test
 
 Below we provide an example to train and test [OSNet (Zhou et al. ICCV'19)](https://arxiv.org/abs/1905.00953). Assume `PATH_TO_DATA` is the directory containing reid datasets. The environmental variable `CUDA_VISIBLE_DEVICES` is omitted, which you need to specify if you have a pool of gpus and want to use a specific set of them.
 
+### Augmentation pipeline (torchvision v2)
+
+Training and test transforms are now built from `torchreid.data.transforms` using a config-driven backend (`aug.backend: torchvision_v2`).
+
+- Basic train-time toggle list: `data.transforms`
+  - Supported names: `random_flip`, `random_crop`, `color_jitter`, `random_erase`, `random_patch`, `rand_augment`
+- Detailed params: `aug.train.<name>.*`
+- Evaluation degradations: `aug.test.*` (`jpeg`, `resolution`, `grayscale`, `rotation`, `gaussian_blur`, `gaussian_noise`, `brightness`, `contrast`)
+
+Behavior details:
+
+- `data.transforms: []` means no stochastic train augmentations (no fallback to `random_flip`)
+- `aug.disable_stochastic: True` disables all stochastic train transforms, including ones listed in `data.transforms`
+- Normalization uses `data.norm_mean` / `data.norm_std` as final values; these override `aug.normalize.mean` / `aug.normalize.std`
+
+Example override from CLI:
+
+```bash
+uv run python scripts/main.py \
+  --config-file configs/im_osnet_x1_0_softmax_256x128_amsgrad_cosine.yaml \
+  --root $PATH_TO_DATA \
+  aug.disable_stochastic True \
+  data.transforms "[]" \
+  aug.test.jpeg.enabled True \
+  aug.test.jpeg.quality 30
+```
+
 ### Conventional setting
 
 To train OSNet on Market1501, do
