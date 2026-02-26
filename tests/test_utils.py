@@ -16,6 +16,13 @@ from torchreid.utils import (
 )
 
 
+class _PickleOnlyPayload:
+    """Simple custom object used to exercise pickle-based checkpoint loads."""
+
+    def __init__(self, value):
+        self.value = value
+
+
 class TestReRanking:
     """Test re_ranking function."""
 
@@ -135,6 +142,23 @@ class TestCheckpointUtilities:
         """Test loading non-existent checkpoint."""
         with pytest.raises(FileNotFoundError):
             load_checkpoint("nonexistent_file.pth.tar")
+
+    def test_load_checkpoint_safe_mode_rejects_pickled_objects(self, tmp_path):
+        """Safe mode should reject checkpoint payloads that require pickle code execution."""
+        checkpoint_file = tmp_path / "unsafe_payload.pth.tar"
+        torch.save({"epoch": 1, "payload": _PickleOnlyPayload("unsafe")}, checkpoint_file)
+
+        with pytest.raises(RuntimeError, match="safe=False"):
+            load_checkpoint(str(checkpoint_file))
+
+    def test_load_checkpoint_trusted_mode_allows_pickled_objects(self, tmp_path):
+        """Trusted mode should load legacy pickle payloads."""
+        checkpoint_file = tmp_path / "trusted_payload.pth.tar"
+        torch.save({"epoch": 1, "payload": _PickleOnlyPayload("trusted")}, checkpoint_file)
+
+        loaded = load_checkpoint(str(checkpoint_file), safe=False)
+        assert isinstance(loaded["payload"], _PickleOnlyPayload)
+        assert loaded["payload"].value == "trusted"
 
 
 class TestCountNumParam:

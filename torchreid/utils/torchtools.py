@@ -22,6 +22,33 @@ __all__ = [
 ]
 
 
+def _torch_load_compat(fpath, map_location, weights_only, pickle_module=None):
+    """Call torch.load with weights_only when supported."""
+    kwargs = {"map_location": map_location}
+    if pickle_module is not None:
+        kwargs["pickle_module"] = pickle_module
+
+    try:
+        return torch.load(fpath, weights_only=weights_only, **kwargs)
+    except TypeError:
+        if weights_only:
+            warnings.warn(
+                "Installed PyTorch does not support weights_only; falling back to potentially unsafe torch.load.",
+                stacklevel=2,
+            )
+        return torch.load(fpath, **kwargs)
+
+
+def _is_safe_load_rejection(error):
+    """Best-effort match for weights_only safety rejections."""
+    msg = str(error).lower()
+    return (
+        "weights only load failed" in msg
+        or "unsupported global" in msg
+        or ("weights_only" in msg and "unsafe" in msg)
+    )
+
+
 def save_checkpoint(state, save_dir, is_best=False, remove_module_from_keys=False):
     r"""Saves checkpoint.
 
@@ -61,7 +88,7 @@ def save_checkpoint(state, save_dir, is_best=False, remove_module_from_keys=Fals
         shutil.copy(fpath, osp.join(osp.dirname(fpath), "model-best.pth.tar"))
 
 
-def load_checkpoint(fpath):
+def load_checkpoint(fpath, safe=True):
     r"""Loads checkpoint.
 
     ``UnicodeDecodeError`` can be well handled, which means
@@ -69,6 +96,10 @@ def load_checkpoint(fpath):
 
     Args:
         fpath (str): path to checkpoint.
+        safe (bool, optional): if True, use ``torch.load(..., weights_only=True)``
+            to avoid pickle code execution from untrusted checkpoints. Set to
+            False only for trusted legacy checkpoints that require full pickle
+            deserialization.
 
     Returns:
         dict
@@ -85,18 +116,28 @@ def load_checkpoint(fpath):
         raise FileNotFoundError(f'File is not found at "{fpath}"')
     map_location = None if torch.cuda.is_available() else "cpu"
     try:
-        checkpoint = torch.load(fpath, map_location=map_location, weights_only=False)
+        checkpoint = _torch_load_compat(fpath, map_location=map_location, weights_only=safe)
     except UnicodeDecodeError:
         pickle.load = partial(pickle.load, encoding="latin1")
         pickle.Unpickler = partial(pickle.Unpickler, encoding="latin1")
-        checkpoint = torch.load(fpath, pickle_module=pickle, map_location=map_location, weights_only=False)
-    except Exception:
+        checkpoint = _torch_load_compat(
+            fpath,
+            map_location=map_location,
+            weights_only=safe,
+            pickle_module=pickle,
+        )
+    except Exception as error:
+        if safe and _is_safe_load_rejection(error):
+            raise RuntimeError(
+                "Safe checkpoint loading blocked pickle deserialization. "
+                "Retry with load_checkpoint(..., safe=False) only for trusted files."
+            ) from error
         logger.warning('Unable to load checkpoint from "%s"', fpath)
         raise
     return checkpoint
 
 
-def resume_from_checkpoint(fpath, model, optimizer=None, scheduler=None):
+def resume_from_checkpoint(fpath, model, optimizer=None, scheduler=None, safe=True):
     r"""Resumes training from a checkpoint.
 
     This will load (1) model weights and (2) ``state_dict``
@@ -107,6 +148,7 @@ def resume_from_checkpoint(fpath, model, optimizer=None, scheduler=None):
         model (nn.Module): model.
         optimizer (Optimizer, optional): an Optimizer.
         scheduler (LRScheduler, optional): an LRScheduler.
+        safe (bool, optional): passed to :func:`load_checkpoint`.
 
     Returns:
         int: start_epoch.
@@ -119,7 +161,7 @@ def resume_from_checkpoint(fpath, model, optimizer=None, scheduler=None):
         >>> )
     """
     logger.info('Loading checkpoint from "%s"', fpath)
-    checkpoint = load_checkpoint(fpath)
+    checkpoint = load_checkpoint(fpath, safe=safe)
     model.load_state_dict(checkpoint["state_dict"])
     logger.info("Loaded model weights")
     if optimizer is not None and "optimizer" in checkpoint:
@@ -242,7 +284,7 @@ def count_num_param(model):
     return num_param
 
 
-def load_pretrained_weights(model, weight_path):
+def load_pretrained_weights(model, weight_path, safe=True):
     r"""Loads pretrianed weights to model.
 
     Features::
@@ -252,13 +294,14 @@ def load_pretrained_weights(model, weight_path):
     Args:
         model (nn.Module): network model.
         weight_path (str): path to pretrained weights.
+        safe (bool, optional): passed to :func:`load_checkpoint`.
 
     Examples::
         >>> from torchreid.utils import load_pretrained_weights
         >>> weight_path = 'log/my_model/model-best.pth.tar'
         >>> load_pretrained_weights(model, weight_path)
     """
-    checkpoint = load_checkpoint(weight_path)
+    checkpoint = load_checkpoint(weight_path, safe=safe)
     state_dict = checkpoint.get("state_dict", checkpoint)
 
     model_dict = model.state_dict()

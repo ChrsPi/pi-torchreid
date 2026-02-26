@@ -30,7 +30,7 @@ def _build_effective_config(
             cfg.data.height = height
         if not getattr(cfg.data, "width", None):
             cfg.data.width = width
-        if not getattr(cfg.data, "transforms", None):
+        if not hasattr(cfg.data, "transforms") or cfg.data.transforms is None:
             cfg.data.transforms = transforms if transforms is not None else ["random_flip"]
         if norm_mean is not None:
             cfg.data.norm_mean = list(norm_mean)

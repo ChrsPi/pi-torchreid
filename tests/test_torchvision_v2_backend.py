@@ -12,6 +12,17 @@ def test_empty_transform_list_is_noop_not_random_flip():
     assert not any(isinstance(t, v2.RandomHorizontalFlip) for t in transform_tr.transforms)
 
 
+def test_cfg_empty_transform_list_beats_transforms_arg():
+    """cfg.data.transforms=[] must not be overwritten by transforms arg."""
+    cfg = get_default_config()
+    cfg.data.transforms = []
+    cfg.aug.train.random_flip.enabled = False
+
+    transform_tr, _ = build_transforms(256, 128, transforms=["random_flip"], cfg=cfg)
+
+    assert not any(isinstance(t, v2.RandomHorizontalFlip) for t in transform_tr.transforms)
+
+
 def test_explicit_norm_overrides_aug_normalize():
     """Explicit norm_mean/norm_std must override aug.normalize.* when both exist."""
     cfg = get_default_config()
