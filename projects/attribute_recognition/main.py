@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 
 import torchreid
-from torchreid.data.transforms import Compose, Normalize, Random2DTranslation, RandomHorizontalFlip, Resize, ToTensor
+from torchreid.data.transforms import build_transforms
 from torchreid.utils import (
     AverageMeter,
     Logger,
@@ -32,13 +32,13 @@ args = parser.parse_args()
 
 
 def init_dataset(use_gpu):
-    normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-
-    transform_tr = Compose(
-        [Random2DTranslation(args.height, args.width, p=0.5), RandomHorizontalFlip(), ToTensor(), normalize]
+    transform_tr, transform_te = build_transforms(
+        args.height,
+        args.width,
+        transforms=["random_flip", "random_crop"],
+        norm_mean=[0.485, 0.456, 0.406],
+        norm_std=[0.229, 0.224, 0.225],
     )
-
-    transform_te = Compose([Resize([args.height, args.width]), ToTensor(), normalize])
 
     trainset = datasets.init_dataset(args.dataset, root=args.root, transform=transform_tr, mode="train", verbose=True)
 

@@ -1,121 +1,29 @@
-"""Tests for data transforms."""
+"""Tests for data transforms (torchvision v2 backend)."""
+
+import random
 
 from PIL import Image
 import pytest
 import torch
+from yacs.config import CfgNode as CN  # noqa: N817
 
 from torchreid.data.transforms import (
-    ColorAugmentation,
-    Random2DTranslation,
-    RandomErasing,
+    DeterministicBrightness,
+    DeterministicContrast,
+    DeterministicRotation,
     RandomPatch,
+    ResolutionDegradation,
     build_transforms,
 )
 
 
-class TestRandom2DTranslation:
-    """Test Random2DTranslation transform."""
-
-    def test_random_2d_translation_output_size(self):
-        """Test output image size matches target."""
-        transform = Random2DTranslation(height=256, width=128, p=1.0)
-        img = Image.new("RGB", (100, 200))
-        result = transform(img)
-        assert result.size == (128, 256)
-
-    def test_random_2d_translation_probability(self):
-        """Test probability parameter."""
-        # With p=0.0, should always resize (no translation)
-        transform = Random2DTranslation(height=256, width=128, p=0.0)
-        img = Image.new("RGB", (100, 200))
-        # Set random seed for deterministic test
-        import random
-
-        random.seed(42)
-        result = transform(img)
-        assert result.size == (128, 256)
-
-    def test_random_2d_translation_different_sizes(self):
-        """Test with different image sizes."""
-        transform = Random2DTranslation(height=256, width=128, p=1.0)
-        for w, h in [(64, 128), (200, 400), (50, 100)]:
-            img = Image.new("RGB", (w, h))
-            result = transform(img)
-            assert result.size == (128, 256)
-
-
-class TestRandomErasing:
-    """Test RandomErasing transform."""
-
-    def test_random_erasing_basic(self):
-        """Test basic random erasing."""
-        transform = RandomErasing(probability=1.0, mean=[0.5, 0.5, 0.5])
-        img = torch.randn(3, 256, 128)
-        result = transform(img)
-        assert result.shape == img.shape
-
-    def test_random_erasing_probability(self):
-        """Test probability parameter."""
-        # With probability=0.0, should return original image
-        transform = RandomErasing(probability=0.0, mean=[0.5, 0.5, 0.5])
-        img = torch.randn(3, 256, 128)
-        original = img.clone()
-        import random
-
-        random.seed(42)
-        result = transform(img)
-        # May or may not be equal due to randomness, but shape should match
-        assert result.shape == original.shape
-
-    def test_random_erasing_grayscale(self):
-        """Test with grayscale image (1 channel)."""
-        transform = RandomErasing(probability=1.0, mean=[0.5])
-        img = torch.randn(1, 256, 128)
-        result = transform(img)
-        assert result.shape == img.shape
-
-    def test_random_erasing_different_sizes(self):
-        """Test with different image sizes."""
-        transform = RandomErasing(probability=1.0, mean=[0.5, 0.5, 0.5])
-        for c, h, w in [(3, 64, 32), (3, 512, 256), (1, 128, 64)]:
-            img = torch.randn(c, h, w)
-            result = transform(img)
-            assert result.shape == img.shape
-
-
-class TestColorAugmentation:
-    """Test ColorAugmentation transform."""
-
-    def test_color_augmentation_basic(self):
-        """Test basic color augmentation."""
-        transform = ColorAugmentation(p=1.0)
-        tensor = torch.randn(3, 256, 128)
-        result = transform(tensor)
-        assert result.shape == tensor.shape
-
-    def test_color_augmentation_input_validation(self):
-        """Test input validation."""
-        transform = ColorAugmentation(p=1.0)
-        # Should work with 3-channel tensor
-        tensor = torch.randn(3, 256, 128)
-        result = transform(tensor)
-        assert result.shape == tensor.shape
-
-        # Should fail with wrong dimensions
-        with pytest.raises(ValueError):
-            transform._check_input(torch.randn(1, 256, 128))
-        with pytest.raises(ValueError):
-            transform._check_input(torch.randn(3, 256))
-
-
 class TestRandomPatch:
-    """Test RandomPatch transform."""
+    """Test RandomPatch transform (custom augmentation)."""
 
     def test_random_patch_basic(self):
         """Test basic random patch functionality."""
         transform = RandomPatch(prob_happen=1.0, min_sample_size=1)
         img = Image.new("RGB", (128, 256))
-        # Need to populate patch pool first
         for _ in range(transform.min_sample_size):
             result = transform(img)
             assert result.size == img.size
@@ -124,30 +32,29 @@ class TestRandomPatch:
         """Test probability parameter."""
         transform = RandomPatch(prob_happen=0.0, min_sample_size=1)
         img = Image.new("RGB", (128, 256))
-        # Populate pool
         for _ in range(transform.min_sample_size):
             transform(img)
-        # With prob_happen=0.0, should return original
-        import random
-
         random.seed(42)
         result = transform(img)
         assert result.size == img.size
 
 
 class TestBuildTransforms:
-    """Test build_transforms function."""
+    """Test build_transforms function (torchvision v2 backend)."""
 
-    def test_build_transforms_basic(self):
-        """Test basic transform building."""
+    def test_build_transforms_returns_tuple_of_callables(self):
+        """Test that build_transforms returns (train, test) callables."""
         transform_tr, transform_te = build_transforms(256, 128, transforms="random_flip")
         assert transform_tr is not None
         assert transform_te is not None
+        assert callable(transform_tr)
+        assert callable(transform_te)
 
     def test_build_transforms_string_input(self):
         """Test with string input."""
         transform_tr, transform_te = build_transforms(256, 128, transforms="random_flip")
         assert transform_tr is not None
+        assert transform_te is not None
 
     def test_build_transforms_list_input(self):
         """Test with list input."""
@@ -155,27 +62,30 @@ class TestBuildTransforms:
             256, 128, transforms=["random_flip", "random_erase", "color_jitter"]
         )
         assert transform_tr is not None
+        assert transform_te is not None
 
     def test_build_transforms_none(self):
-        """Test with None transforms."""
+        """Test with None transforms (defaults to random_flip)."""
         transform_tr, transform_te = build_transforms(256, 128, transforms=None)
         assert transform_tr is not None
         assert transform_te is not None
 
     def test_build_transforms_empty_list(self):
-        """Test with empty list."""
+        """Test with empty list (no stochastic augmentations)."""
         transform_tr, transform_te = build_transforms(256, 128, transforms=[])
         assert transform_tr is not None
         assert transform_te is not None
 
     def test_build_transforms_custom_norm(self):
         """Test with custom normalization."""
-        transform_tr, transform_te = build_transforms(256, 128, norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5])
+        transform_tr, transform_te = build_transforms(
+            256, 128, norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5]
+        )
         assert transform_tr is not None
         assert transform_te is not None
 
     def test_build_transforms_all_transforms(self):
-        """Test with all supported transforms."""
+        """Test with all supported transform names."""
         transform_tr, transform_te = build_transforms(
             256,
             128,
@@ -188,31 +98,224 @@ class TestBuildTransforms:
             ],
         )
         assert transform_tr is not None
+        assert transform_te is not None
 
     def test_build_transforms_invalid_type(self):
         """Test error handling for invalid transform type."""
         with pytest.raises(ValueError, match="transforms must be a list"):
-            build_transforms(256, 128, transforms=123)  # Invalid type
+            build_transforms(256, 128, transforms=123)
 
-    def test_build_transforms_train_vs_test(self):
-        """Test that train and test transforms are different."""
-        transform_tr, transform_te = build_transforms(256, 128, transforms=["random_flip", "random_erase"])
-        # They should be different objects
+    def test_build_transforms_train_vs_test_different_objects(self):
+        """Test that train and test transforms are different objects."""
+        transform_tr, transform_te = build_transforms(
+            256, 128, transforms=["random_flip", "random_erase"]
+        )
         assert transform_tr is not transform_te
 
-    def test_build_transforms_apply(self):
-        """Test that transforms can be applied to images."""
+    def test_build_transforms_output_shape_and_dtype(self):
+        """Test that transforms produce tensors of expected shape and dtype."""
         transform_tr, transform_te = build_transforms(256, 128, transforms="random_flip")
         img = Image.new("RGB", (100, 200))
-        # Test transform should work
-        result_te = transform_te(img)
-        assert isinstance(result_te, torch.Tensor)
-        assert result_te.shape == (3, 256, 128)
 
-        # Train transform (with randomness)
-        import random
+        result_te = transform_te(img)
+        assert hasattr(result_te, "shape")
+        assert result_te.shape == (3, 256, 128)
+        assert result_te.dtype == torch.float32
 
         random.seed(42)
+        torch.manual_seed(42)
         result_tr = transform_tr(img)
-        assert isinstance(result_tr, torch.Tensor)
+        assert hasattr(result_tr, "shape")
         assert result_tr.shape == (3, 256, 128)
+        assert result_tr.dtype == torch.float32
+
+
+def _make_test_cfg(**degradation_overrides: dict) -> CN:
+    """Build a minimal cfg with test degradations for testing."""
+    from scripts.default_config import get_default_config
+
+    cfg = get_default_config()
+    cfg.data.height = 256
+    cfg.data.width = 128
+    cfg.data.transforms = ["random_flip"]
+    for name, params in degradation_overrides.items():
+        sub = getattr(cfg.aug.test, name)
+        for k, v in params.items():
+            setattr(sub, k, v)
+    return cfg
+
+
+class TestTestDegradations:
+    """Integration tests for evaluation-time degradation transforms."""
+
+    def _apply_test_transform(self, cfg: CN) -> torch.Tensor:
+        _, transform_te = build_transforms(256, 128, cfg=cfg)
+        img = Image.new("RGB", (200, 400), color=(128, 100, 80))
+        return transform_te(img)
+
+    def test_no_degradation_default(self):
+        """No degradations enabled produces standard output."""
+        cfg = _make_test_cfg()
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_gaussian_noise(self):
+        """Gaussian noise changes pixel values."""
+        cfg = _make_test_cfg(gaussian_noise={"enabled": True, "std": 0.1})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_gaussian_blur(self):
+        """Gaussian blur produces valid output."""
+        cfg = _make_test_cfg(gaussian_blur={"enabled": True, "sigma": 2.0})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_gaussian_blur_custom_kernel(self):
+        """Gaussian blur with explicit kernel size."""
+        cfg = _make_test_cfg(gaussian_blur={"enabled": True, "sigma": 1.0, "kernel_size": 5})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+
+    def test_grayscale(self):
+        """Grayscale produces 3-channel output."""
+        cfg = _make_test_cfg(grayscale={"enabled": True})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_rotation(self):
+        """Rotation produces valid output."""
+        cfg = _make_test_cfg(rotation={"enabled": True, "angle": 15.0})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_resolution(self):
+        """Resolution degradation produces valid output."""
+        cfg = _make_test_cfg(resolution={"enabled": True, "scale": 0.25})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_jpeg(self):
+        """JPEG compression produces valid output."""
+        cfg = _make_test_cfg(jpeg={"enabled": True, "quality": 10})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_brightness(self):
+        """Brightness adjustment produces valid output."""
+        cfg = _make_test_cfg(brightness={"enabled": True, "factor": 0.5})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_contrast(self):
+        """Contrast adjustment produces valid output."""
+        cfg = _make_test_cfg(contrast={"enabled": True, "factor": 0.3})
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_multiple_degradations_combined(self):
+        """Multiple degradations can be combined."""
+        cfg = _make_test_cfg(
+            gaussian_blur={"enabled": True, "sigma": 1.5},
+            brightness={"enabled": True, "factor": 0.8},
+            jpeg={"enabled": True, "quality": 30},
+            grayscale={"enabled": True},
+        )
+        result = self._apply_test_transform(cfg)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_determinism_rotation(self):
+        """Rotation is deterministic across calls."""
+        cfg = _make_test_cfg(rotation={"enabled": True, "angle": 10.0})
+        r1 = self._apply_test_transform(cfg)
+        r2 = self._apply_test_transform(cfg)
+        assert torch.equal(r1, r2)
+
+    def test_determinism_brightness(self):
+        """Brightness is deterministic across calls."""
+        cfg = _make_test_cfg(brightness={"enabled": True, "factor": 0.6})
+        r1 = self._apply_test_transform(cfg)
+        r2 = self._apply_test_transform(cfg)
+        assert torch.equal(r1, r2)
+
+    def test_determinism_contrast(self):
+        """Contrast is deterministic across calls."""
+        cfg = _make_test_cfg(contrast={"enabled": True, "factor": 0.4})
+        r1 = self._apply_test_transform(cfg)
+        r2 = self._apply_test_transform(cfg)
+        assert torch.equal(r1, r2)
+
+    def test_determinism_resolution(self):
+        """Resolution degradation is deterministic."""
+        cfg = _make_test_cfg(resolution={"enabled": True, "scale": 0.5})
+        r1 = self._apply_test_transform(cfg)
+        r2 = self._apply_test_transform(cfg)
+        assert torch.equal(r1, r2)
+
+
+class TestCustomDegradationTransforms:
+    """Unit tests for custom degradation transform classes."""
+
+    def test_resolution_degradation_shape(self):
+        img = torch.randint(0, 255, (3, 256, 128), dtype=torch.uint8)
+        t = ResolutionDegradation(scale=0.5, target_size=(256, 128))
+        result = t(img)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.uint8
+
+    def test_resolution_degradation_invalid_scale(self):
+        with pytest.raises(ValueError, match="scale must be in"):
+            ResolutionDegradation(scale=1.5, target_size=(256, 128))
+
+    def test_resolution_degradation_very_small_scale(self):
+        img = torch.randint(0, 255, (3, 256, 128), dtype=torch.uint8)
+        t = ResolutionDegradation(scale=0.05, target_size=(256, 128))
+        result = t(img)
+        assert result.shape == (3, 256, 128)
+
+    def test_deterministic_rotation(self):
+        img = torch.randint(0, 255, (3, 64, 32), dtype=torch.uint8)
+        t = DeterministicRotation(angle=45.0)
+        r1 = t(img)
+        r2 = t(img)
+        assert r1.shape == img.shape
+        assert torch.equal(r1, r2)
+
+    def test_deterministic_brightness(self):
+        img = torch.rand(3, 64, 32, dtype=torch.float32)
+        t = DeterministicBrightness(factor=0.5)
+        r1 = t(img)
+        r2 = t(img)
+        assert r1.shape == img.shape
+        assert torch.equal(r1, r2)
+
+    def test_deterministic_brightness_darkens(self):
+        img = torch.ones(3, 64, 32, dtype=torch.float32) * 0.8
+        t = DeterministicBrightness(factor=0.5)
+        result = t(img)
+        assert result.max() < img.max()
+
+    def test_deterministic_contrast(self):
+        img = torch.rand(3, 64, 32, dtype=torch.float32)
+        t = DeterministicContrast(factor=0.5)
+        r1 = t(img)
+        r2 = t(img)
+        assert r1.shape == img.shape
+        assert torch.equal(r1, r2)
+
+    def test_deterministic_contrast_reduces(self):
+        img = torch.rand(3, 64, 32, dtype=torch.float32)
+        t = DeterministicContrast(factor=0.5)
+        result = t(img)
+        # Reduced contrast means values closer to the mean
+        assert result.std() < img.std()

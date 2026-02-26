@@ -128,7 +128,6 @@ ignore = [
 # Additional domain naming (dataset/API conventions)
 "torchreid/data/datasets/image/ilids.py" = ["N801"]
 "torchreid/data/datasets/video/ilidsvid.py" = ["N801"]
-"torchreid/data/transforms.py" = ["N803"]
 "torchreid/utils/feature_extractor.py" = ["N812"]
 
 [tool.ruff.lint.isort]

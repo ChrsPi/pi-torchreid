@@ -22,12 +22,72 @@ def get_default_config():
     cfg.data.height = 256  # image height
     cfg.data.width = 128  # image width
     cfg.data.combineall = False  # combine train, query and gallery for training
-    cfg.data.transforms = ["random_flip"]  # data augmentation
+    cfg.data.transforms = ["random_flip"]  # data augmentation (names: random_flip, random_crop, color_jitter, random_erase, random_patch, rand_augment)
     cfg.data.k_tfm = 1  # number of times to apply augmentation to an image independently
     cfg.data.norm_mean = [0.485, 0.456, 0.406]  # default is imagenet mean
     cfg.data.norm_std = [0.229, 0.224, 0.225]  # default is imagenet std
     cfg.data.save_dir = "log"  # path to save log
     cfg.data.load_train_targets = False  # load training set from target dataset
+
+    # augmentation (torchvision v2 backend)
+    cfg.aug = CN()
+    cfg.aug.backend = "torchvision_v2"
+    cfg.aug.seed = None  # optional seed for determinism
+    cfg.aug.disable_stochastic = False  # debug: disable all random augmentations
+    cfg.aug.train = CN()
+    cfg.aug.train.random_flip = CN()
+    cfg.aug.train.random_flip.enabled = True
+    cfg.aug.train.random_flip.p = 0.5
+    cfg.aug.train.random_crop = CN()
+    cfg.aug.train.random_crop.enabled = False
+    cfg.aug.train.random_crop.scale_factor = 1.125
+    cfg.aug.train.color_jitter = CN()
+    cfg.aug.train.color_jitter.enabled = False
+    cfg.aug.train.color_jitter.brightness = 0.2
+    cfg.aug.train.color_jitter.contrast = 0.15
+    cfg.aug.train.color_jitter.saturation = 0.0
+    cfg.aug.train.color_jitter.hue = 0.0
+    cfg.aug.train.random_erase = CN()
+    cfg.aug.train.random_erase.enabled = False
+    cfg.aug.train.random_erase.p = 0.5
+    cfg.aug.train.random_erase.scale = [0.02, 0.4]
+    cfg.aug.train.random_erase.ratio = [0.3, 3.3]
+    cfg.aug.train.random_patch = CN()
+    cfg.aug.train.random_patch.enabled = False
+    cfg.aug.train.random_patch.prob_happen = 0.5
+    cfg.aug.train.rand_augment = CN()
+    cfg.aug.train.rand_augment.enabled = False
+    cfg.aug.train.rand_augment.num_ops = 2
+    cfg.aug.train.rand_augment.magnitude = 9
+    cfg.aug.test = CN()
+    cfg.aug.test.center_crop = False
+    cfg.aug.test.gaussian_noise = CN()
+    cfg.aug.test.gaussian_noise.enabled = False
+    cfg.aug.test.gaussian_noise.std = 0.1
+    cfg.aug.test.gaussian_blur = CN()
+    cfg.aug.test.gaussian_blur.enabled = False
+    cfg.aug.test.gaussian_blur.sigma = 2.0
+    cfg.aug.test.gaussian_blur.kernel_size = 0  # 0 = auto from sigma
+    cfg.aug.test.grayscale = CN()
+    cfg.aug.test.grayscale.enabled = False
+    cfg.aug.test.rotation = CN()
+    cfg.aug.test.rotation.enabled = False
+    cfg.aug.test.rotation.angle = 10.0
+    cfg.aug.test.resolution = CN()
+    cfg.aug.test.resolution.enabled = False
+    cfg.aug.test.resolution.scale = 0.5
+    cfg.aug.test.jpeg = CN()
+    cfg.aug.test.jpeg.enabled = False
+    cfg.aug.test.jpeg.quality = 50
+    cfg.aug.test.brightness = CN()
+    cfg.aug.test.brightness.enabled = False
+    cfg.aug.test.brightness.factor = 0.7
+    cfg.aug.test.contrast = CN()
+    cfg.aug.test.contrast.enabled = False
+    cfg.aug.test.contrast.factor = 0.5
+    cfg.aug.normalize = CN()
+    cfg.aug.normalize.mean = [0.485, 0.456, 0.406]
+    cfg.aug.normalize.std = [0.229, 0.224, 0.225]
 
     # specific datasets
     cfg.market1501 = CN()
@@ -130,6 +190,7 @@ def imagedata_kwargs(cfg):
         "num_datasets": cfg.sampler.num_datasets,
         "train_sampler": cfg.sampler.train_sampler,
         "train_sampler_t": cfg.sampler.train_sampler_t,
+        "cfg": cfg,
         # image dataset specific
         "cuhk03_labeled": cfg.cuhk03.labeled_images,
         "cuhk03_classic_split": cfg.cuhk03.classic_split,
@@ -157,6 +218,7 @@ def videodata_kwargs(cfg):
         "num_cams": cfg.sampler.num_cams,
         "num_datasets": cfg.sampler.num_datasets,
         "train_sampler": cfg.sampler.train_sampler,
+        "cfg": cfg,
         # video dataset specific
         "seq_len": cfg.video.seq_len,
         "sample_method": cfg.video.sample_method,
