@@ -11,6 +11,7 @@ from .image import (
     Market1501,
     SenseReID,
     University1652,
+    VeRiCARLA,
     VIPeR,
     iLIDS,
 )
@@ -30,6 +31,7 @@ __image_datasets = {
     "cuhk02": CUHK02,
     "university1652": University1652,
     "cuhksysu": CUHKSYSU,
+    "veri_carla": VeRiCARLA,
 }
 
 __video_datasets = {"mars": Mars, "ilidsvid": iLIDSVID, "prid2011": PRID2011, "dukemtmcvidreid": DukeMTMCVidReID}
