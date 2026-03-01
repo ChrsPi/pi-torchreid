@@ -22,7 +22,9 @@ def get_default_config():
     cfg.data.height = 256  # image height
     cfg.data.width = 128  # image width
     cfg.data.combineall = False  # combine train, query and gallery for training
-    cfg.data.transforms = ["random_flip"]  # data augmentation (names: random_flip, random_crop, color_jitter, random_erase, random_patch, rand_augment)
+    cfg.data.transforms = [
+        "random_flip"
+    ]  # data augmentation (names: random_flip, random_crop, color_jitter, random_erase, random_patch, rand_augment)
     cfg.data.k_tfm = 1  # number of times to apply augmentation to an image independently
     cfg.data.norm_mean = [0.485, 0.456, 0.406]  # default is imagenet mean
     cfg.data.norm_std = [0.229, 0.224, 0.225]  # default is imagenet std

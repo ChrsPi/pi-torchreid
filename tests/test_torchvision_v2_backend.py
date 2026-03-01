@@ -23,9 +23,33 @@ def test_cfg_empty_transform_list_beats_transforms_arg():
     assert not any(isinstance(t, v2.RandomHorizontalFlip) for t in transform_tr.transforms)
 
 
-def test_explicit_norm_overrides_aug_normalize():
-    """Explicit norm_mean/norm_std must override aug.normalize.* when both exist."""
+def test_cfg_data_norm_values_are_not_overwritten_by_explicit_norm_args():
+    """Existing cfg.data.norm_* must take precedence over explicit norm args."""
     cfg = get_default_config()
+    cfg.aug.normalize.mean = [0.9, 0.8, 0.7]
+    cfg.aug.normalize.std = [0.3, 0.2, 0.1]
+
+    transform_tr, transform_te = build_transforms(
+        256,
+        128,
+        norm_mean=[0.1, 0.2, 0.3],
+        norm_std=[0.7, 0.8, 0.9],
+        cfg=cfg,
+    )
+    norm_tr = next(t for t in transform_tr.transforms if isinstance(t, v2.Normalize))
+    norm_te = next(t for t in transform_te.transforms if isinstance(t, v2.Normalize))
+
+    assert norm_tr.mean == [0.485, 0.456, 0.406]
+    assert norm_tr.std == [0.229, 0.224, 0.225]
+    assert norm_te.mean == [0.485, 0.456, 0.406]
+    assert norm_te.std == [0.229, 0.224, 0.225]
+
+
+def test_explicit_norm_used_when_cfg_data_norm_values_are_missing():
+    """Explicit norm args should populate cfg.data.norm_* when values are missing."""
+    cfg = get_default_config()
+    cfg.data.norm_mean = []
+    cfg.data.norm_std = None
     cfg.aug.normalize.mean = [0.9, 0.8, 0.7]
     cfg.aug.normalize.std = [0.3, 0.2, 0.1]
 

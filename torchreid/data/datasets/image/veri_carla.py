@@ -24,6 +24,8 @@ import glob
 import os.path as osp
 import re
 
+from torchreid.utils import logger
+
 from ..dataset import ImageDataset
 
 
@@ -63,8 +65,15 @@ class VeRiCARLA(ImageDataset):
 
         pid_container = set()
         for img_path in img_paths:
-            match = pattern.search(osp.basename(img_path))
+            basename = osp.basename(img_path)
+            match = pattern.search(basename)
             if match is None:
+                logger.warning(
+                    "Skipping VeRi-CARLA file '%s' in '%s': expected pattern '%s'",
+                    basename,
+                    dir_path,
+                    pattern.pattern,
+                )
                 continue
             pid = int(match.group(3))
             pid_container.add(pid)
@@ -72,8 +81,15 @@ class VeRiCARLA(ImageDataset):
 
         data = []
         for img_path in img_paths:
-            match = pattern.search(osp.basename(img_path))
+            basename = osp.basename(img_path)
+            match = pattern.search(basename)
             if match is None:
+                logger.warning(
+                    "Skipping VeRi-CARLA file '%s' in '%s': expected pattern '%s'",
+                    basename,
+                    dir_path,
+                    pattern.pattern,
+                )
                 continue
             timestamp = match.group(1)
             frame_idx = int(match.group(2))

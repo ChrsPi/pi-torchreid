@@ -32,9 +32,11 @@ def _build_effective_config(
             cfg.data.width = width
         if not hasattr(cfg.data, "transforms") or cfg.data.transforms is None:
             cfg.data.transforms = transforms if transforms is not None else ["random_flip"]
-        if norm_mean is not None:
+        existing_norm_mean = getattr(cfg.data, "norm_mean", None)
+        if norm_mean is not None and not existing_norm_mean:
             cfg.data.norm_mean = list(norm_mean)
-        if norm_std is not None:
+        existing_norm_std = getattr(cfg.data, "norm_std", None)
+        if norm_std is not None and not existing_norm_std:
             cfg.data.norm_std = list(norm_std)
         # Ensure aug exists (backend reads from it)
         if not hasattr(cfg, "aug"):
@@ -132,9 +134,13 @@ def build_transforms(
         Tuple of (train_transform, test_transform), both callables PIL/tensor -> tensor.
     """
     if norm_std is None:
-        norm_std = [0.229, 0.224, 0.225]
+        existing_norm_std = getattr(getattr(cfg, "data", None), "norm_std", None) if cfg is not None else None
+        if not existing_norm_std:
+            norm_std = [0.229, 0.224, 0.225]
     if norm_mean is None:
-        norm_mean = [0.485, 0.456, 0.406]
+        existing_norm_mean = getattr(getattr(cfg, "data", None), "norm_mean", None) if cfg is not None else None
+        if not existing_norm_mean:
+            norm_mean = [0.485, 0.456, 0.406]
     if transforms is None:
         transforms = ["random_flip"]
     if isinstance(transforms, str):

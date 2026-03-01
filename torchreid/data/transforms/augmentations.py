@@ -75,8 +75,9 @@ class RandomPatch:
         x1 = random.randint(0, width - patch_w)
         y1 = random.randint(0, height - patch_h)
         patch = self._transform_patch(patch)
-        img.paste(patch, (x1, y1))
-        return img
+        patched_img = img.copy()
+        patched_img.paste(patch, (x1, y1))
+        return patched_img
 
 
 class ResolutionDegradation:

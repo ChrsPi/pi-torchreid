@@ -41,7 +41,7 @@ The augmentation stack is configured through ``data.*`` and ``aug.*`` and built 
 - Train-time transform names: ``data.transforms``
   - Supported names: ``random_flip``, ``random_crop``, ``color_jitter``, ``random_erase``, ``random_patch``, ``rand_augment``
 - Detailed train params: ``aug.train.<name>.*``
-- Evaluation degradations: ``aug.test.<name>.*`` (e.g. ``jpeg``, ``resolution``, ``gaussian_blur``, ``gaussian_noise``)
+- Evaluation degradations: ``aug.test.<name>.*`` (supported names: ``jpeg``, ``resolution``, ``gaussian_blur``, ``gaussian_noise``, ``grayscale``, ``rotation``, ``brightness``, ``contrast``)
 
 Important behavior:
 

@@ -78,9 +78,7 @@ class TestBuildTransforms:
 
     def test_build_transforms_custom_norm(self):
         """Test with custom normalization."""
-        transform_tr, transform_te = build_transforms(
-            256, 128, norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5]
-        )
+        transform_tr, transform_te = build_transforms(256, 128, norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5])
         assert transform_tr is not None
         assert transform_te is not None
 
@@ -107,9 +105,7 @@ class TestBuildTransforms:
 
     def test_build_transforms_train_vs_test_different_objects(self):
         """Test that train and test transforms are different objects."""
-        transform_tr, transform_te = build_transforms(
-            256, 128, transforms=["random_flip", "random_erase"]
-        )
+        transform_tr, transform_te = build_transforms(256, 128, transforms=["random_flip", "random_erase"])
         assert transform_tr is not transform_te
 
     def test_build_transforms_output_shape_and_dtype(self):
@@ -162,10 +158,19 @@ class TestTestDegradations:
 
     def test_gaussian_noise(self):
         """Gaussian noise changes pixel values."""
+        baseline_cfg = _make_test_cfg(gaussian_noise={"enabled": False})
+        baseline_result = self._apply_test_transform(baseline_cfg)
+
         cfg = _make_test_cfg(gaussian_noise={"enabled": True, "std": 0.1})
         result = self._apply_test_transform(cfg)
+
+        assert result.shape == baseline_result.shape
+        assert result.dtype == baseline_result.dtype
         assert result.shape == (3, 256, 128)
         assert result.dtype == torch.float32
+        diff = (result - baseline_result).abs()
+        assert torch.count_nonzero(diff).item() > 0
+        assert diff.mean().item() > 0
 
     def test_gaussian_blur(self):
         """Gaussian blur produces valid output."""

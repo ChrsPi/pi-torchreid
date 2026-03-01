@@ -30,22 +30,24 @@ def _torch_load_compat(fpath, map_location, weights_only, pickle_module=None):
 
     try:
         return torch.load(fpath, weights_only=weights_only, **kwargs)
-    except TypeError:
-        if weights_only:
-            warnings.warn(
-                "Installed PyTorch does not support weights_only; falling back to potentially unsafe torch.load.",
-                stacklevel=2,
-            )
-        return torch.load(fpath, **kwargs)
+    except TypeError as error:
+        error_msg = str(error).lower()
+        unsupported_weights_only = "keyword argument" in error_msg and "weights_only" in error_msg
+        if unsupported_weights_only:
+            if weights_only:
+                raise RuntimeError(
+                    "Installed PyTorch does not support safe weights_only checkpoint loading. "
+                    "Upgrade PyTorch or retry with load_checkpoint(..., safe=False) only for trusted files."
+                ) from error
+            return torch.load(fpath, **kwargs)
+        raise
 
 
 def _is_safe_load_rejection(error):
     """Best-effort match for weights_only safety rejections."""
     msg = str(error).lower()
     return (
-        "weights only load failed" in msg
-        or "unsupported global" in msg
-        or ("weights_only" in msg and "unsafe" in msg)
+        "weights only load failed" in msg or "unsupported global" in msg or ("weights_only" in msg and "unsafe" in msg)
     )
 
 
@@ -115,23 +117,30 @@ def load_checkpoint(fpath, safe=True):
     if not osp.exists(fpath):
         raise FileNotFoundError(f'File is not found at "{fpath}"')
     map_location = None if torch.cuda.is_available() else "cpu"
+    safe_load_error = (
+        "Safe checkpoint loading blocked pickle deserialization. "
+        "Retry with load_checkpoint(..., safe=False) only for trusted files."
+    )
     try:
         checkpoint = _torch_load_compat(fpath, map_location=map_location, weights_only=safe)
     except UnicodeDecodeError:
         pickle.load = partial(pickle.load, encoding="latin1")
         pickle.Unpickler = partial(pickle.Unpickler, encoding="latin1")
-        checkpoint = _torch_load_compat(
-            fpath,
-            map_location=map_location,
-            weights_only=safe,
-            pickle_module=pickle,
-        )
+        try:
+            checkpoint = _torch_load_compat(
+                fpath,
+                map_location=map_location,
+                weights_only=safe,
+                pickle_module=pickle,
+            )
+        except Exception as error:
+            if safe and _is_safe_load_rejection(error):
+                raise RuntimeError(safe_load_error) from error
+            logger.warning('Unable to load checkpoint from "%s"', fpath)
+            raise
     except Exception as error:
         if safe and _is_safe_load_rejection(error):
-            raise RuntimeError(
-                "Safe checkpoint loading blocked pickle deserialization. "
-                "Retry with load_checkpoint(..., safe=False) only for trusted files."
-            ) from error
+            raise RuntimeError(safe_load_error) from error
         logger.warning('Unable to load checkpoint from "%s"', fpath)
         raise
     return checkpoint

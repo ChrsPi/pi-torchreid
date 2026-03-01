@@ -2,8 +2,10 @@
 
 from collections.abc import Callable
 import math
+import random
 from typing import Any
 
+import numpy as np
 import torch
 from torchvision.transforms import v2
 
@@ -122,11 +124,13 @@ class TorchvisionV2Backend:
         size = (height, width)
         transforms_list: list[Any] = []
 
-        # Optional seed for determinism
+        # Optional seed for deterministic augmentation behavior.
         seed = getattr(cfg.aug, "seed", None) if hasattr(cfg, "aug") else None
         if seed is not None:
-            # Seed is applied at training loop level; we just build the pipeline
-            pass
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            logger.info("+ set augmentation seed=%s", seed)
 
         # 1. Resize or RandomResizedCrop (random_crop)
         if _is_enabled(cfg, "random_crop", default=False):
@@ -134,9 +138,7 @@ class TorchvisionV2Backend:
             # RandomResizedCrop with scale that mimics 1.125x resize then crop
             scale_min = 1.0 / (scale_factor * scale_factor)
             scale_max = 1.0
-            transforms_list.append(
-                v2.RandomResizedCrop(size=size, scale=(scale_min, scale_max), antialias=True)
-            )
+            transforms_list.append(v2.RandomResizedCrop(size=size, scale=(scale_min, scale_max), antialias=True))
             logger.info(
                 "+ random resized crop %s (scale ~1/%.2f to 1)",
                 size,
@@ -169,22 +171,24 @@ class TorchvisionV2Backend:
             transforms_list.append(RandomPatch(prob_happen=prob))
             logger.info("+ random patch")
 
-        # 5. PIL -> tensor, scale to [0, 1]
+        # 5. PIL -> uint8 TVTensor
         transforms_list.append(v2.ToImage())
-        transforms_list.append(v2.ToDtype(torch.float32, scale=True))
 
-        # 6. RandAugment (optional)
+        # 6. RandAugment (optional, expects uint8 input)
         if _is_enabled(cfg, "rand_augment", default=False):
             num_ops = _get_train_param(cfg, "rand_augment", "num_ops", 2)
             magnitude = _get_train_param(cfg, "rand_augment", "magnitude", 9)
             transforms_list.append(v2.RandAugment(num_ops=num_ops, magnitude=magnitude))
             logger.info("+ RandAugment")
 
-        # 7. Normalize
+        # 7. uint8 -> float32 [0, 1]
+        transforms_list.append(v2.ToDtype(torch.float32, scale=True))
+
+        # 8. Normalize
         transforms_list.append(v2.Normalize(mean=mean, std=std))
         logger.info("+ normalize (mean=%s, std=%s)", mean, std)
 
-        # 8. Random erasing (tensor-only, after normalize; fill with mean)
+        # 9. Random erasing (tensor-only, after normalize; fill with mean)
         if _is_enabled(cfg, "random_erase", default=False):
             p = _get_train_param(cfg, "random_erase", "p", 0.5)
             scale = _get_train_param(cfg, "random_erase", "scale", (0.02, 0.4))
