@@ -16,9 +16,8 @@ def test_cfg_empty_transform_list_beats_transforms_arg():
     """cfg.data.transforms=[] must not be overwritten by transforms arg."""
     cfg = get_default_config()
     cfg.data.transforms = []
-    cfg.aug.train.random_flip.enabled = False
 
-    transform_tr, _ = build_transforms(256, 128, transforms=["random_flip"], cfg=cfg)
+    transform_tr, _ = build_transforms(256, 128, transforms=["RandomHorizontalFlip"], cfg=cfg)
 
     assert not any(isinstance(t, v2.RandomHorizontalFlip) for t in transform_tr.transforms)
 
@@ -73,9 +72,9 @@ def test_disable_stochastic_blocks_data_transform_shortcut():
     """disable_stochastic must disable random transforms even if listed in data.transforms."""
     cfg = get_default_config()
     cfg.data.transforms = [
-        "random_flip",
+        "RandomHorizontalFlip",
         "random_crop",
-        "color_jitter",
+        "ColorJitter",
         "random_patch",
         "rand_augment",
         "random_erase",

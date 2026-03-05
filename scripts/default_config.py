@@ -22,9 +22,7 @@ def get_default_config():
     cfg.data.height = 256  # image height
     cfg.data.width = 128  # image width
     cfg.data.combineall = False  # combine train, query and gallery for training
-    cfg.data.transforms = [
-        "random_flip"
-    ]  # data augmentation (names: random_flip, random_crop, color_jitter, random_erase, random_patch, rand_augment)
+    cfg.data.transforms = []  # data augmentation: v2 class names (PascalCase) or shortcut tokens (random_crop, random_patch, rand_augment, random_erase)
     cfg.data.k_tfm = 1  # number of times to apply augmentation to an image independently
     cfg.data.norm_mean = [0.485, 0.456, 0.406]  # default is imagenet mean
     cfg.data.norm_std = [0.229, 0.224, 0.225]  # default is imagenet std
@@ -37,18 +35,9 @@ def get_default_config():
     cfg.aug.seed = None  # optional seed for determinism
     cfg.aug.disable_stochastic = False  # debug: disable all random augmentations
     cfg.aug.train = CN()
-    cfg.aug.train.random_flip = CN()
-    cfg.aug.train.random_flip.enabled = True
-    cfg.aug.train.random_flip.p = 0.5
     cfg.aug.train.random_crop = CN()
     cfg.aug.train.random_crop.enabled = False
     cfg.aug.train.random_crop.scale_factor = 1.125
-    cfg.aug.train.color_jitter = CN()
-    cfg.aug.train.color_jitter.enabled = False
-    cfg.aug.train.color_jitter.brightness = 0.2
-    cfg.aug.train.color_jitter.contrast = 0.15
-    cfg.aug.train.color_jitter.saturation = 0.0
-    cfg.aug.train.color_jitter.hue = 0.0
     cfg.aug.train.random_erase = CN()
     cfg.aug.train.random_erase.enabled = False
     cfg.aug.train.random_erase.p = 0.5
@@ -61,6 +50,8 @@ def get_default_config():
     cfg.aug.train.rand_augment.enabled = False
     cfg.aug.train.rand_augment.num_ops = 2
     cfg.aug.train.rand_augment.magnitude = 9
+    # Allow arbitrary keys for v2 passthrough transform params
+    cfg.aug.train.set_new_allowed(True)
     cfg.aug.test = CN()
     cfg.aug.test.center_crop = False
     cfg.aug.test.gaussian_noise = CN()

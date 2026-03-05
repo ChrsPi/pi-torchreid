@@ -31,7 +31,7 @@ def _build_effective_config(
         if not getattr(cfg.data, "width", None):
             cfg.data.width = width
         if not hasattr(cfg.data, "transforms") or cfg.data.transforms is None:
-            cfg.data.transforms = transforms if transforms is not None else ["random_flip"]
+            cfg.data.transforms = transforms if transforms is not None else []
         existing_norm_mean = getattr(cfg.data, "norm_mean", None)
         if norm_mean is not None and not existing_norm_mean:
             cfg.data.norm_mean = list(norm_mean)
@@ -58,7 +58,7 @@ def _build_effective_config(
     effective.data.height = height
     effective.data.width = width
     if transforms is None:
-        effective.data.transforms = ["random_flip"]
+        effective.data.transforms = []
     else:
         effective.data.transforms = [transforms] if isinstance(transforms, str) else list(transforms)
     effective.data.norm_mean = list(norm_mean) if norm_mean is not None else [0.485, 0.456, 0.406]
@@ -71,18 +71,9 @@ def _build_effective_config(
     effective.aug.normalize.mean = effective.data.norm_mean
     effective.aug.normalize.std = effective.data.norm_std
     effective.aug.train = CN()
-    effective.aug.train.random_flip = CN()
-    effective.aug.train.random_flip.enabled = "random_flip" in effective.data.transforms
-    effective.aug.train.random_flip.p = 0.5
     effective.aug.train.random_crop = CN()
     effective.aug.train.random_crop.enabled = "random_crop" in effective.data.transforms
     effective.aug.train.random_crop.scale_factor = 1.125
-    effective.aug.train.color_jitter = CN()
-    effective.aug.train.color_jitter.enabled = "color_jitter" in effective.data.transforms
-    effective.aug.train.color_jitter.brightness = 0.2
-    effective.aug.train.color_jitter.contrast = 0.15
-    effective.aug.train.color_jitter.saturation = 0.0
-    effective.aug.train.color_jitter.hue = 0.0
     effective.aug.train.random_erase = CN()
     effective.aug.train.random_erase.enabled = "random_erase" in effective.data.transforms
     effective.aug.train.random_erase.p = 0.5
@@ -95,6 +86,8 @@ def _build_effective_config(
     effective.aug.train.rand_augment.enabled = "rand_augment" in effective.data.transforms
     effective.aug.train.rand_augment.num_ops = 2
     effective.aug.train.rand_augment.magnitude = 9
+    # Allow arbitrary keys for v2 passthrough transform params
+    effective.aug.train.set_new_allowed(True)
     effective.aug.test = CN()
     effective.aug.test.center_crop = False
     effective.aug.test.gaussian_noise = CN({"enabled": False, "std": 0.1})
@@ -111,7 +104,7 @@ def _build_effective_config(
 def build_transforms(
     height: int,
     width: int,
-    transforms: str | Sequence[str] | None = "random_flip",
+    transforms: str | Sequence[str] | None = None,
     norm_mean: Sequence[float] | None = None,
     norm_std: Sequence[float] | None = None,
     cfg: Any | None = None,
@@ -122,8 +115,9 @@ def build_transforms(
     Args:
         height: Target image height.
         width: Target image width.
-        transforms: Transform names for training (e.g. 'random_flip', 'random_erase',
-            or list ['random_flip', 'color_jitter']). Default 'random_flip'.
+        transforms: Transform names for training. Use v2 class names (PascalCase,
+            e.g. 'RandomHorizontalFlip') or shortcut tokens (random_crop, random_patch,
+            rand_augment, random_erase). Default None (no augmentation).
         norm_mean: Normalization mean (default ImageNet).
         norm_std: Normalization std (default ImageNet).
         cfg: Optional full config with aug.* and data.*. If provided, backend and
@@ -142,7 +136,7 @@ def build_transforms(
         if not existing_norm_mean:
             norm_mean = [0.485, 0.456, 0.406]
     if transforms is None:
-        transforms = ["random_flip"]
+        transforms = []
     if isinstance(transforms, str):
         transforms = [transforms]
     if not isinstance(transforms, (list, tuple)):

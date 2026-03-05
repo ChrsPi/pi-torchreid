@@ -1,6 +1,7 @@
 """Torchvision transforms v2 augmentation backend."""
 
 from collections.abc import Callable
+import inspect
 import math
 import random
 from typing import Any
@@ -18,15 +19,26 @@ from torchreid.data.transforms.augmentations import (
 )
 from torchreid.utils import logger
 
+# Shortcut tokens: names with custom build logic that can't be expressed
+# as a simple v2.ClassName(**kwargs) passthrough.
+SHORTCUT_TOKENS = frozenset(
+    {
+        "random_crop",  # replaces Resize with RandomResizedCrop + scale_factor math
+        "random_patch",  # custom class, not a v2 transform
+        "rand_augment",  # must go at uint8 stage (after ToImage, before ToDtype)
+        "random_erase",  # must go after Normalize, fills with per-channel mean
+    }
+)
+
 
 def _get_transform_names(cfg: Any) -> list[str]:
-    """Return list of enabled transform names (lowercase)."""
+    """Return list of transform names from config."""
     names = getattr(cfg.data, "transforms", None)
     if names is None:
-        names = ["random_flip"]
+        names = []
     if isinstance(names, str):
         names = [names]
-    return [str(x).lower() for x in names]
+    return [str(x) for x in names]
 
 
 def _get_img_size(cfg: Any) -> tuple[int, int]:
@@ -114,6 +126,42 @@ def _get_test_param(cfg: Any, name: str, param: str, default: Any) -> Any:
     return getattr(sub, param, default)
 
 
+def _build_v2_passthrough(name: str, cfg: Any, size: tuple[int, int]) -> Any | None:
+    """Instantiate a torchvision v2 transform by class name.
+
+    Returns None if *name* is not found in ``torchvision.transforms.v2``.
+    """
+    cls = getattr(v2, name, None)
+    if cls is None:
+        return None
+    kwargs: dict[str, Any] = {}
+    if hasattr(cfg, "aug") and hasattr(cfg.aug, "train"):
+        sub = getattr(cfg.aug.train, name, None)
+        if sub is not None and hasattr(sub, "items"):
+            kwargs = {k: val for k, val in sub.items() if k != "enabled"}
+    # Auto-inject size if the transform expects it and user didn't provide it
+    if "size" not in kwargs:
+        sig = inspect.signature(cls)
+        if "size" in sig.parameters:
+            kwargs["size"] = size
+    return cls(**kwargs)
+
+
+def _validate_transform_names(names: list[str]) -> None:
+    """Validate transform names, raising ValueError for unknown ones."""
+    for name in names:
+        if name in SHORTCUT_TOKENS:
+            continue
+        if getattr(v2, name, None) is not None:
+            continue
+        shortcuts = ", ".join(sorted(SHORTCUT_TOKENS))
+        raise ValueError(
+            f"Unknown transform: {name!r}. "
+            f"Shortcut tokens: {shortcuts}. "
+            f"You can also use any torchvision.transforms.v2 class name (PascalCase)."
+        )
+
+
 class TorchvisionV2Backend:
     """Augmentation backend using torchvision.transforms.v2."""
 
@@ -123,6 +171,14 @@ class TorchvisionV2Backend:
         mean, std = _get_norm(cfg)
         size = (height, width)
         transforms_list: list[Any] = []
+
+        # Validate all transform names
+        names = _get_transform_names(cfg)
+        _validate_transform_names(names)
+
+        # Collect passthrough names (v2 class names, not shortcut tokens)
+        disable_stochastic = bool(getattr(getattr(cfg, "aug", None), "disable_stochastic", False))
+        passthrough_names = [] if disable_stochastic else [n for n in names if n not in SHORTCUT_TOKENS]
 
         # Optional seed for deterministic augmentation behavior.
         seed = getattr(cfg.aug, "seed", None) if hasattr(cfg, "aug") else None
@@ -148,47 +204,36 @@ class TorchvisionV2Backend:
             transforms_list.append(v2.Resize(size=size, antialias=True))
             logger.info("+ resize to %sx%s", height, width)
 
-        # 2. Random horizontal flip
-        if _is_enabled(cfg, "random_flip", default=True):
-            p = _get_train_param(cfg, "random_flip", "p", 0.5)
-            transforms_list.append(v2.RandomHorizontalFlip(p=p))
-            logger.info("+ random horizontal flip (p=%s)", p)
-
-        # 3. Color jitter
-        if _is_enabled(cfg, "color_jitter", default=False):
-            brightness = _get_train_param(cfg, "color_jitter", "brightness", 0.2)
-            contrast = _get_train_param(cfg, "color_jitter", "contrast", 0.15)
-            saturation = _get_train_param(cfg, "color_jitter", "saturation", 0.0)
-            hue = _get_train_param(cfg, "color_jitter", "hue", 0.0)
-            transforms_list.append(
-                v2.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
-            )
-            logger.info("+ color jitter")
-
-        # 4. Random patch (custom, PIL-only)
+        # 2. Random patch (custom, PIL-only)
         if _is_enabled(cfg, "random_patch", default=False):
             prob = _get_train_param(cfg, "random_patch", "prob_happen", 0.5)
             transforms_list.append(RandomPatch(prob_happen=prob))
             logger.info("+ random patch")
 
-        # 5. PIL -> uint8 TVTensor
+        # 3. v2 passthrough transforms (in data.transforms list order)
+        for name in passthrough_names:
+            t = _build_v2_passthrough(name, cfg, size)
+            transforms_list.append(t)
+            logger.info("+ %s (v2 passthrough)", name)
+
+        # 4. PIL -> uint8 TVTensor
         transforms_list.append(v2.ToImage())
 
-        # 6. RandAugment (optional, expects uint8 input)
+        # 5. RandAugment (optional, expects uint8 input)
         if _is_enabled(cfg, "rand_augment", default=False):
             num_ops = _get_train_param(cfg, "rand_augment", "num_ops", 2)
             magnitude = _get_train_param(cfg, "rand_augment", "magnitude", 9)
             transforms_list.append(v2.RandAugment(num_ops=num_ops, magnitude=magnitude))
             logger.info("+ RandAugment")
 
-        # 7. uint8 -> float32 [0, 1]
+        # 6. uint8 -> float32 [0, 1]
         transforms_list.append(v2.ToDtype(torch.float32, scale=True))
 
-        # 8. Normalize
+        # 7. Normalize
         transforms_list.append(v2.Normalize(mean=mean, std=std))
         logger.info("+ normalize (mean=%s, std=%s)", mean, std)
 
-        # 9. Random erasing (tensor-only, after normalize; fill with mean)
+        # 8. Random erasing (tensor-only, after normalize; fill with mean)
         if _is_enabled(cfg, "random_erase", default=False):
             p = _get_train_param(cfg, "random_erase", "p", 0.5)
             scale = _get_train_param(cfg, "random_erase", "scale", (0.02, 0.4))
@@ -204,10 +249,10 @@ class TorchvisionV2Backend:
         """Build test/validation augmentation pipeline (deterministic).
 
         Pipeline order:
-          Resize → [CenterCrop] → ToImage (uint8)
-          → [JPEG] → [Resolution] → [Grayscale] → [Rotation]
-          → ToDtype(float32) → [GaussianBlur] → [GaussianNoise]
-          → [Brightness] → [Contrast] → Normalize
+          Resize -> [CenterCrop] -> ToImage (uint8)
+          -> [JPEG] -> [Resolution] -> [Grayscale] -> [Rotation]
+          -> ToDtype(float32) -> [GaussianBlur] -> [GaussianNoise]
+          -> [Brightness] -> [Contrast] -> Normalize
         """
         height, width = _get_img_size(cfg)
         mean, std = _get_norm(cfg)
@@ -223,7 +268,7 @@ class TorchvisionV2Backend:
         if aug_test is not None and getattr(aug_test, "center_crop", False):
             transforms_list.append(v2.CenterCrop(size=size))
 
-        # 3. PIL → uint8 TVTensor
+        # 3. PIL -> uint8 TVTensor
         transforms_list.append(v2.ToImage())
 
         # -- uint8 degradations --
@@ -251,7 +296,7 @@ class TorchvisionV2Backend:
             transforms_list.append(DeterministicRotation(angle=angle))
             logger.info("+ test degradation: rotation (angle=%.1f)", angle)
 
-        # 4. uint8 → float32 [0, 1]
+        # 4. uint8 -> float32 [0, 1]
         transforms_list.append(v2.ToDtype(torch.float32, scale=True))
 
         # -- float32 degradations --

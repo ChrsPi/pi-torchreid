@@ -44,7 +44,7 @@ class TestBuildTransforms:
 
     def test_build_transforms_returns_tuple_of_callables(self):
         """Test that build_transforms returns (train, test) callables."""
-        transform_tr, transform_te = build_transforms(256, 128, transforms="random_flip")
+        transform_tr, transform_te = build_transforms(256, 128, transforms="RandomHorizontalFlip")
         assert transform_tr is not None
         assert transform_te is not None
         assert callable(transform_tr)
@@ -52,20 +52,20 @@ class TestBuildTransforms:
 
     def test_build_transforms_string_input(self):
         """Test with string input."""
-        transform_tr, transform_te = build_transforms(256, 128, transforms="random_flip")
+        transform_tr, transform_te = build_transforms(256, 128, transforms="RandomHorizontalFlip")
         assert transform_tr is not None
         assert transform_te is not None
 
     def test_build_transforms_list_input(self):
         """Test with list input."""
         transform_tr, transform_te = build_transforms(
-            256, 128, transforms=["random_flip", "random_erase", "color_jitter"]
+            256, 128, transforms=["RandomHorizontalFlip", "random_erase", "ColorJitter"]
         )
         assert transform_tr is not None
         assert transform_te is not None
 
     def test_build_transforms_none(self):
-        """Test with None transforms (defaults to random_flip)."""
+        """Test with None transforms (no augmentation)."""
         transform_tr, transform_te = build_transforms(256, 128, transforms=None)
         assert transform_tr is not None
         assert transform_te is not None
@@ -83,15 +83,15 @@ class TestBuildTransforms:
         assert transform_te is not None
 
     def test_build_transforms_all_transforms(self):
-        """Test with all supported transform names."""
+        """Test with shortcut tokens and passthrough transforms."""
         transform_tr, transform_te = build_transforms(
             256,
             128,
             transforms=[
-                "random_flip",
+                "RandomHorizontalFlip",
                 "random_crop",
                 "random_patch",
-                "color_jitter",
+                "ColorJitter",
                 "random_erase",
             ],
         )
@@ -105,12 +105,12 @@ class TestBuildTransforms:
 
     def test_build_transforms_train_vs_test_different_objects(self):
         """Test that train and test transforms are different objects."""
-        transform_tr, transform_te = build_transforms(256, 128, transforms=["random_flip", "random_erase"])
+        transform_tr, transform_te = build_transforms(256, 128, transforms=["RandomHorizontalFlip", "random_erase"])
         assert transform_tr is not transform_te
 
     def test_build_transforms_output_shape_and_dtype(self):
         """Test that transforms produce tensors of expected shape and dtype."""
-        transform_tr, transform_te = build_transforms(256, 128, transforms="random_flip")
+        transform_tr, transform_te = build_transforms(256, 128, transforms="RandomHorizontalFlip")
         img = Image.new("RGB", (100, 200))
 
         result_te = transform_te(img)
@@ -133,7 +133,7 @@ def _make_test_cfg(**degradation_overrides: dict) -> CN:
     cfg = get_default_config()
     cfg.data.height = 256
     cfg.data.width = 128
-    cfg.data.transforms = ["random_flip"]
+    cfg.data.transforms = ["RandomHorizontalFlip"]
     for name, params in degradation_overrides.items():
         sub = getattr(cfg.aug.test, name)
         for k, v in params.items():
@@ -266,6 +266,105 @@ class TestTestDegradations:
         r1 = self._apply_test_transform(cfg)
         r2 = self._apply_test_transform(cfg)
         assert torch.equal(r1, r2)
+
+
+class TestV2Passthrough:
+    """Tests for v2 passthrough transforms (PascalCase class names)."""
+
+    def test_passthrough_random_grayscale(self):
+        """v2 passthrough: RandomGrayscale produces valid tensor."""
+        transform_tr, _ = build_transforms(256, 128, transforms=["RandomGrayscale"])
+        img = Image.new("RGB", (100, 200))
+        result = transform_tr(img)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_passthrough_gaussian_blur(self):
+        """v2 passthrough: GaussianBlur produces valid tensor."""
+        cfg = _make_test_cfg()
+        cfg.data.transforms = ["GaussianBlur"]
+        cfg.aug.train.set_new_allowed(True)
+        cfg.aug.train.GaussianBlur = CN({"kernel_size": 5, "sigma": 1.0})
+        transform_tr, _ = build_transforms(256, 128, cfg=cfg)
+        img = Image.new("RGB", (100, 200))
+        result = transform_tr(img)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_passthrough_with_kwargs_from_config(self):
+        """v2 passthrough reads kwargs from cfg.aug.train.<Name>."""
+        cfg = _make_test_cfg()
+        cfg.data.transforms = ["RandomGrayscale"]
+        cfg.aug.train.set_new_allowed(True)
+        cfg.aug.train.RandomGrayscale = CN({"p": 1.0})
+        transform_tr, _ = build_transforms(256, 128, cfg=cfg)
+        img = Image.new("RGB", (100, 200), color=(128, 100, 80))
+        result = transform_tr(img)
+        assert result.shape == (3, 256, 128)
+        # With p=1.0, all channels should be identical (grayscale).
+        # Denormalize first since ImageNet norm uses different per-channel mean/std.
+        mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+        std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+        denorm = result * std + mean
+        assert torch.allclose(denorm[0], denorm[1], atol=1e-4)
+        assert torch.allclose(denorm[1], denorm[2], atol=1e-4)
+
+    def test_passthrough_auto_inject_size(self):
+        """v2 passthrough auto-injects size for transforms that require it."""
+        cfg = _make_test_cfg()
+        cfg.data.transforms = ["RandomResizedCrop"]
+        cfg.aug.train.set_new_allowed(True)
+        cfg.aug.train.RandomResizedCrop = CN({"scale": [0.9, 1.0], "ratio": [0.9, 1.1]})
+        transform_tr, _ = build_transforms(256, 128, cfg=cfg)
+        img = Image.new("RGB", (100, 200))
+        result = transform_tr(img)
+        assert result.shape == (3, 256, 128)
+        assert result.dtype == torch.float32
+
+    def test_passthrough_multiple_transforms(self):
+        """Multiple v2 passthrough transforms work together."""
+        cfg = _make_test_cfg()
+        cfg.data.transforms = ["RandomHorizontalFlip", "RandomGrayscale", "RandomEqualize"]
+        cfg.aug.train.set_new_allowed(True)
+        cfg.aug.train.RandomGrayscale = CN({"p": 0.1})
+        transform_tr, _ = build_transforms(256, 128, cfg=cfg)
+        img = Image.new("RGB", (100, 200))
+        result = transform_tr(img)
+        assert result.shape == (3, 256, 128)
+
+
+class TestTransformValidation:
+    """Tests for transform name validation."""
+
+    def test_unknown_token_raises_error(self):
+        """Unknown transform name raises ValueError."""
+        with pytest.raises(ValueError, match="Unknown transform.*'bogus_transform'"):
+            build_transforms(256, 128, transforms=["bogus_transform"])
+
+    def test_invalid_v2_class_raises_error(self):
+        """Invalid PascalCase name that's not in v2 raises ValueError."""
+        with pytest.raises(ValueError, match="Unknown transform.*'NotARealTransform'"):
+            build_transforms(256, 128, transforms=["NotARealTransform"])
+
+    def test_error_message_includes_shortcut_tokens(self):
+        """Error message lists available shortcut tokens."""
+        with pytest.raises(ValueError, match="Shortcut tokens:.*random_crop"):
+            build_transforms(256, 128, transforms=["bad_name"])
+
+    def test_error_message_includes_v2_hint(self):
+        """Error message hints at using v2 class names."""
+        with pytest.raises(ValueError, match="torchvision.transforms.v2 class name"):
+            build_transforms(256, 128, transforms=["bad_name"])
+
+    def test_valid_shortcut_and_passthrough_mixed(self):
+        """Mix of shortcut tokens and v2 passthrough names is valid."""
+        cfg = _make_test_cfg()
+        cfg.data.transforms = ["RandomHorizontalFlip", "ColorJitter", "random_erase", "RandomGrayscale"]
+        cfg.aug.train.set_new_allowed(True)
+        transform_tr, _ = build_transforms(256, 128, cfg=cfg)
+        img = Image.new("RGB", (100, 200))
+        result = transform_tr(img)
+        assert result.shape == (3, 256, 128)
 
 
 class TestCustomDegradationTransforms:
