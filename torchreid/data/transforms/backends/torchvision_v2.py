@@ -109,8 +109,7 @@ def _get_random_crop_scale_params(cfg: Any) -> tuple[float, float, float]:
     scale_factor = float(_get_train_param(cfg, "random_crop", "scale_factor", 1.125))
     if not math.isfinite(scale_factor) or scale_factor <= 1.0:
         raise ValueError(
-            "cfg.aug.train.random_crop.scale_factor must be > 1.0 "
-            f"for RandomResizedCrop, got {scale_factor}"
+            f"cfg.aug.train.random_crop.scale_factor must be > 1.0 for RandomResizedCrop, got {scale_factor}"
         )
 
     scale_min = 1.0 / (scale_factor * scale_factor)
