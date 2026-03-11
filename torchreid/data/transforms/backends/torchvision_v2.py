@@ -104,6 +104,20 @@ def _get_train_param(cfg: Any, transform_name: str, param: str, default: Any) ->
     return getattr(sub, param, default)
 
 
+def _get_random_crop_scale_params(cfg: Any) -> tuple[float, float, float]:
+    """Return validated RandomResizedCrop scale params."""
+    scale_factor = float(_get_train_param(cfg, "random_crop", "scale_factor", 1.125))
+    if not math.isfinite(scale_factor) or scale_factor <= 1.0:
+        raise ValueError(
+            "cfg.aug.train.random_crop.scale_factor must be > 1.0 "
+            f"for RandomResizedCrop, got {scale_factor}"
+        )
+
+    scale_min = 1.0 / (scale_factor * scale_factor)
+    scale_max = 1.0
+    return scale_factor, scale_min, scale_max
+
+
 def _is_test_degradation_enabled(cfg: Any, name: str) -> bool:
     """Check if a test degradation is enabled via cfg.aug.test.<name>.enabled."""
     aug_test = getattr(getattr(cfg, "aug", None), "test", None)
@@ -190,10 +204,8 @@ class TorchvisionV2Backend:
 
         # 1. Resize or RandomResizedCrop (random_crop)
         if _is_enabled(cfg, "random_crop", default=False):
-            scale_factor = _get_train_param(cfg, "random_crop", "scale_factor", 1.125)
+            scale_factor, scale_min, scale_max = _get_random_crop_scale_params(cfg)
             # RandomResizedCrop with scale that mimics 1.125x resize then crop
-            scale_min = 1.0 / (scale_factor * scale_factor)
-            scale_max = 1.0
             transforms_list.append(v2.RandomResizedCrop(size=size, scale=(scale_min, scale_max), antialias=True))
             logger.info(
                 "+ random resized crop %s (scale ~1/%.2f to 1)",
@@ -307,7 +319,8 @@ class TorchvisionV2Backend:
             kernel_size = int(_get_test_param(cfg, "gaussian_blur", "kernel_size", 0))
             if kernel_size == 0:
                 # Auto kernel size: must be odd, >= 6*sigma+1
-                kernel_size = int(math.ceil(6 * sigma)) | 1  # bitwise OR 1 ensures odd
+                kernel_size = int(math.ceil(6 * sigma + 1))
+                kernel_size |= 1  # bitwise OR 1 ensures odd
             transforms_list.append(v2.GaussianBlur(kernel_size=kernel_size, sigma=sigma))
             logger.info("+ test degradation: gaussian_blur (sigma=%.1f, kernel=%d)", sigma, kernel_size)
 

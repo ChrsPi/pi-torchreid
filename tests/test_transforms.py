@@ -366,6 +366,16 @@ class TestTransformValidation:
         result = transform_tr(img)
         assert result.shape == (3, 256, 128)
 
+    def test_random_crop_invalid_scale_raises_error(self):
+        """random_crop scale_factor must be > 1.0 before RandomResizedCrop is built."""
+        cfg = _make_test_cfg()
+        cfg.data.transforms = ["random_crop"]
+        cfg.aug.train.random_crop.enabled = True
+        cfg.aug.train.random_crop.scale_factor = 1.0
+
+        with pytest.raises(ValueError, match="scale_factor"):
+            build_transforms(256, 128, transforms=["random_crop"], cfg=cfg)
+
 
 class TestCustomDegradationTransforms:
     """Unit tests for custom degradation transform classes."""
