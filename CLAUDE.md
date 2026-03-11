@@ -8,6 +8,14 @@ Torchreid is a PyTorch library for deep learning person re-identification (re-ID
 
 **Note: This library is no longer actively maintained.**
 
+## Modernization Guidelines
+
+This codebase is undergoing modernization. When making changes:
+
+- **No backward compatibility required**: Feel free to remove old implementations and replace them with better designs. We don't need to maintain legacy APIs or support old config formats.
+- **Replace rather than wrap**: If a better approach exists (e.g., torchvision.transforms.v2 vs custom augmentations), replace the old code entirely rather than adding compatibility layers.
+- **Update configs and tests**: When changing APIs, update all affected config files and tests to use the new approach.
+
 ## Common Commands
 
 ### Installation
