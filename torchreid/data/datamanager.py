@@ -22,6 +22,7 @@ class DataManager:
         norm_mean (list or None, optional): data mean. Default is None (use imagenet mean).
         norm_std (list or None, optional): data std. Default is None (use imagenet std).
         use_gpu (bool, optional): use gpu. Default is True.
+        cfg: Optional config with aug.* and data.* for augmentation backend.
     """
 
     def __init__(
@@ -34,6 +35,7 @@ class DataManager:
         norm_mean: Sequence[float] | None = None,
         norm_std: Sequence[float] | None = None,
         use_gpu: bool = False,
+        cfg: object | None = None,
     ) -> None:
         self.sources = sources
         self.targets = targets
@@ -53,7 +55,12 @@ class DataManager:
             self.targets = [self.targets]
 
         self.transform_tr, self.transform_te = build_transforms(
-            self.height, self.width, transforms=transforms, norm_mean=norm_mean, norm_std=norm_std
+            self.height,
+            self.width,
+            transforms=transforms,
+            norm_mean=norm_mean,
+            norm_std=norm_std,
+            cfg=cfg,
         )
 
         self.use_gpu = torch.cuda.is_available() and use_gpu
@@ -175,6 +182,7 @@ class ImageDataManager(DataManager):
         cuhk03_labeled: bool = False,
         cuhk03_classic_split: bool = False,
         market1501_500k: bool = False,
+        cfg: object | None = None,
     ) -> None:
         super().__init__(
             sources=sources,
@@ -185,6 +193,7 @@ class ImageDataManager(DataManager):
             norm_mean=norm_mean,
             norm_std=norm_std,
             use_gpu=use_gpu,
+            cfg=cfg,
         )
 
         logger.info("=> Loading train (source) dataset")
@@ -415,6 +424,7 @@ class VideoDataManager(DataManager):
         train_sampler: str = "RandomSampler",
         seq_len: int = 15,
         sample_method: str = "evenly",
+        cfg: object | None = None,
     ) -> None:
         super().__init__(
             sources=sources,
@@ -425,6 +435,7 @@ class VideoDataManager(DataManager):
             norm_mean=norm_mean,
             norm_std=norm_std,
             use_gpu=use_gpu,
+            cfg=cfg,
         )
 
         logger.info("=> Loading train (source) dataset")

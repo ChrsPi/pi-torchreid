@@ -10,4 +10,5 @@ from .msmt17 import MSMT17
 from .prid import PRID
 from .sensereid import SenseReID
 from .university1652 import University1652
+from .veri_carla import VeRiCARLA
 from .viper import VIPeR

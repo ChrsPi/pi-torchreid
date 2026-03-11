@@ -24,6 +24,15 @@ Transforms
 .. automodule:: torchreid.data.transforms
     :members:
 
+.. automodule:: torchreid.data.transforms.augmentations
+    :members:
+
+.. automodule:: torchreid.data.transforms.backends.base
+    :members:
+
+.. automodule:: torchreid.data.transforms.backends.torchvision_v2
+    :members:
+
 
 Dataset
 ---------------------------

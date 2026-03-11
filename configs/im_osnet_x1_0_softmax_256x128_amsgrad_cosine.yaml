@@ -9,8 +9,42 @@ data:
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip']
+  transforms: ['random_flip', 'random_erase']  # optional: random_crop, color_jitter, random_patch, rand_augment
   save_dir: 'log/osnet_x1_0_market1501_softmax_cosinelr'
+
+# Augmentation (torchvision v2). Omit to use defaults from data.transforms above.
+# aug:
+#   backend: 'torchvision_v2'
+#   train:
+#     random_erase:
+#       enabled: true
+#       p: 0.5
+#   test:
+#     # Evaluation-time degradations for robustness studies
+#     gaussian_noise:
+#       enabled: false
+#       std: 0.1
+#     gaussian_blur:
+#       enabled: false
+#       sigma: 2.0
+#       kernel_size: 0      # 0 = auto from sigma
+#     grayscale:
+#       enabled: false
+#     rotation:
+#       enabled: false
+#       angle: 10.0
+#     resolution:
+#       enabled: false
+#       scale: 0.5
+#     jpeg:
+#       enabled: false
+#       quality: 50
+#     brightness:
+#       enabled: false
+#       factor: 0.7
+#     contrast:
+#       enabled: false
+#       factor: 0.5
 
 loss:
   name: 'softmax'
