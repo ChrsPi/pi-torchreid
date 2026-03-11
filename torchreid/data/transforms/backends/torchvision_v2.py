@@ -258,7 +258,10 @@ class TorchvisionV2Backend:
         return v2.Compose(transforms_list)
 
     def build_test_transforms(self, cfg: Any) -> Callable:
-        """Build test/validation augmentation pipeline (deterministic).
+        """Build test/validation augmentation pipeline.
+
+        The pipeline is deterministic except when ``gaussian_noise`` is enabled,
+        as ``v2.GaussianNoise`` samples fresh noise on each call.
 
         Pipeline order:
           Resize -> [CenterCrop] -> ToImage (uint8)
