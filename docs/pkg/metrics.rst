@@ -1,7 +1,7 @@
 .. _pi_torchreid_metrics:
 
 pi_torchreid.metrics
-=================
+====================
 
 
 Distance
