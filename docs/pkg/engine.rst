@@ -1,31 +1,31 @@
 .. _torchreid_engine:
 
-torchreid.engine
+pi_torchreid.engine
 ==================
 
 
 Base Engine
 ------------
 
-.. autoclass:: torchreid.engine.engine.Engine
+.. autoclass:: pi_torchreid.engine.engine.Engine
     :members:
 
 
 Image Engines
 -------------
 
-.. autoclass:: torchreid.engine.image.softmax.ImageSoftmaxEngine
+.. autoclass:: pi_torchreid.engine.image.softmax.ImageSoftmaxEngine
     :members:
 
 
-.. autoclass:: torchreid.engine.image.triplet.ImageTripletEngine
+.. autoclass:: pi_torchreid.engine.image.triplet.ImageTripletEngine
     :members:
 
 
 Video Engines
 -------------
 
-.. autoclass:: torchreid.engine.video.softmax.VideoSoftmaxEngine
+.. autoclass:: pi_torchreid.engine.video.softmax.VideoSoftmaxEngine
 
 
-.. autoclass:: torchreid.engine.video.triplet.VideoTripletEngine
+.. autoclass:: pi_torchreid.engine.video.triplet.VideoTripletEngine

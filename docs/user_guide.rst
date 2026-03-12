@@ -20,8 +20,8 @@ Show available models
 
 .. code-block:: python
     
-    import torchreid
-    torchreid.models.show_avai_models()
+    import pi_torchreid
+    pi_torchreid.models.show_avai_models()
 
 
 Change the training sampler
@@ -70,7 +70,7 @@ Suppose the checkpoint is saved in "log/resnet50/model.pth.tar-30", you can do
 
 .. code-block:: python
     
-    start_epoch = torchreid.utils.resume_from_checkpoint(
+    start_epoch = pi_torchreid.utils.resume_from_checkpoint(
         'log/resnet50/model.pth.tar-30',
         model,
         optimizer
@@ -85,11 +85,11 @@ Suppose the checkpoint is saved in "log/resnet50/model.pth.tar-30", you can do
 
 Compute model complexity
 --------------------------
-We provide a tool in ``torchreid.utils.model_complexity.py`` to automatically compute the model complexity, i.e. number of parameters and FLOPs.
+We provide a tool in ``pi_torchreid.utils.model_complexity.py`` to automatically compute the model complexity, i.e. number of parameters and FLOPs.
 
 .. code-block:: python
     
-    from torchreid import models, utils
+    from pi_torchreid import models, utils
     
     model = models.build_model(name='resnet50', num_classes=1000)
     num_params, flops = utils.compute_model_complexity(model, (1, 3, 256, 128))
@@ -109,7 +109,7 @@ Easy. Just give whatever datasets (keys) you want to the ``sources`` argument wh
 
 .. code-block:: python
     
-    datamanager = torchreid.data.ImageDataManager(
+    datamanager = pi_torchreid.data.ImageDataManager(
         root='reid-data',
         sources=['market1501', 'dukemtmcreid', 'cuhk03', 'msmt17'],
         height=256,
@@ -126,7 +126,7 @@ Easy. Just give whatever datasets (keys) you want to the argument ``targets``, l
 
 .. code-block:: python
     
-    datamanager = torchreid.data.ImageDataManager(
+    datamanager = pi_torchreid.data.ImageDataManager(
         root='reid-data',
         sources='market1501',
         targets='dukemtmcreid', # or targets='cuhk03' or targets=['dukemtmcreid', 'cuhk03']
@@ -142,7 +142,7 @@ This can be easily done by setting ``combineall=True`` when instantiating a data
 
 .. code-block:: python
     
-    datamanager = torchreid.data.ImageDataManager(
+    datamanager = pi_torchreid.data.ImageDataManager(
         root='reid-data',
         sources='market1501',
         height=256,
@@ -181,7 +181,7 @@ with ``combineall=True``, you will get
 
 Optimize layers with different learning rates
 -----------------------------------------------
-A common practice for fine-tuning pretrained models is to use a smaller learning rate for base layers and a large learning rate for randomly initialized layers (referred to as ``new_layers``). ``torchreid.optim.optimizer`` has implemented such feature. What you need to do is to set ``staged_lr=True`` and give the names of ``new_layers`` such as "classifier".
+A common practice for fine-tuning pretrained models is to use a smaller learning rate for base layers and a large learning rate for randomly initialized layers (referred to as ``new_layers``). ``pi_torchreid.optim.optimizer`` has implemented such feature. What you need to do is to set ``staged_lr=True`` and give the names of ``new_layers`` such as "classifier".
 
 Below is an example of setting different learning rates for base layers and new layers in ResNet50,
 
@@ -189,7 +189,7 @@ Below is an example of setting different learning rates for base layers and new 
     
     # New layer "classifier" has a learning rate of 0.01
     # The base layers have a learning rate of 0.001
-    optimizer = torchreid.optim.build_optimizer(
+    optimizer = pi_torchreid.optim.build_optimizer(
         model,
         optim='sgd',
         lr=0.01,
@@ -228,12 +228,12 @@ Note that ``fixbase_epoch`` is counted into ``max_epoch``. In the above example,
 
 Test a trained model
 ----------------------
-You can load a trained model using :code:`torchreid.utils.load_pretrained_weights(model, weight_path)` and set ``test_only=True`` in ``engine.run()``.
+You can load a trained model using :code:`pi_torchreid.utils.load_pretrained_weights(model, weight_path)` and set ``test_only=True`` in ``engine.run()``.
 
 
 Fine-tune a model pre-trained on reid datasets
 -----------------------------------------------
-Use :code:`torchreid.utils.load_pretrained_weights(model, weight_path)` to load the pre-trained weights and then fine-tune on the dataset you want.
+Use :code:`pi_torchreid.utils.load_pretrained_weights(model, weight_path)` to load the pre-trained weights and then fine-tune on the dataset you want.
 
 
 Visualize learning curves with tensorboard
@@ -271,7 +271,7 @@ The output will look like (from left to right: image, activation map, overlapped
 
 
 .. note::
-    In order to visualize activation maps, the CNN needs to output the last convolutional feature maps at eval mode. See ``torchreid/models/osnet.py`` for example.
+    In order to visualize activation maps, the CNN needs to output the last convolutional feature maps at eval mode. See ``pi_torchreid/models/osnet.py`` for example.
 
 
 Use your own dataset
@@ -288,7 +288,7 @@ Use your own dataset
     import os
     import os.path as osp
 
-    from torchreid.data import ImageDataset
+    from pi_torchreid.data import ImageDataset
 
 
     class NewDataset(ImageDataset):
@@ -323,8 +323,8 @@ Use your own dataset
 
 .. code-block:: python
     
-    import torchreid
-    torchreid.data.register_image_dataset('new_dataset', NewDataset)
+    import pi_torchreid
+    pi_torchreid.data.register_image_dataset('new_dataset', NewDataset)
 
 
 3. Initialize a data manager with your dataset.
@@ -332,17 +332,17 @@ Use your own dataset
 .. code-block:: python
     
     # use your own dataset only
-    datamanager = torchreid.data.ImageDataManager(
+    datamanager = pi_torchreid.data.ImageDataManager(
         root='reid-data',
         sources='new_dataset'
     )
     # combine with other datasets
-    datamanager = torchreid.data.ImageDataManager(
+    datamanager = pi_torchreid.data.ImageDataManager(
         root='reid-data',
         sources=['new_dataset', 'dukemtmcreid']
     )
     # cross-dataset evaluation
-    datamanager = torchreid.data.ImageDataManager(
+    datamanager = pi_torchreid.data.ImageDataManager(
         root='reid-data',
         sources=['new_dataset', 'dukemtmcreid'],
         targets='market1501' # or targets=['market1501', 'cuhk03']
@@ -352,16 +352,16 @@ Use your own dataset
 
 Design your own Engine
 ------------------------
-A new Engine should be designed if you have your own loss function. The base Engine class ``torchreid.engine.Engine`` has implemented some generic methods which you can inherit to avoid re-writing. Please refer to the source code for more details. You are suggested to see how ``ImageSoftmaxEngine`` and ``ImageTripletEngine`` are constructed (also ``VideoSoftmaxEngine`` and ``VideoTripletEngine``). All you need to implement might be just a ``forward_backward()`` function.
+A new Engine should be designed if you have your own loss function. The base Engine class ``pi_torchreid.engine.Engine`` has implemented some generic methods which you can inherit to avoid re-writing. Please refer to the source code for more details. You are suggested to see how ``ImageSoftmaxEngine`` and ``ImageTripletEngine`` are constructed (also ``VideoSoftmaxEngine`` and ``VideoTripletEngine``). All you need to implement might be just a ``forward_backward()`` function.
 
 
 Use Torchreid as a feature extractor in your projects
 -------------------------------------------------------
-We have provided a simple API for feature extraction, which accepts input of various types such as a list of image paths or numpy arrays. More details can be found in the code at ``torchreid/utils/feature_extractor.py``. Here we show a simple example of how to extract features given a list of image paths.
+We have provided a simple API for feature extraction, which accepts input of various types such as a list of image paths or numpy arrays. More details can be found in the code at ``pi_torchreid/utils/feature_extractor.py``. Here we show a simple example of how to extract features given a list of image paths.
 
 .. code-block:: python
 
-    from torchreid.utils import FeatureExtractor
+    from pi_torchreid.utils import FeatureExtractor
 
     extractor = FeatureExtractor(
         model_name='osnet_x1_0',
@@ -385,7 +385,7 @@ To reuse the same evaluation preprocessing as ``ImageDataManager``, pass the tra
 .. code-block:: python
 
     from yacs.config import CfgNode as CN
-    from torchreid.utils import FeatureExtractor
+    from pi_torchreid.utils import FeatureExtractor
 
     cfg = CN()
     cfg.data = CN()

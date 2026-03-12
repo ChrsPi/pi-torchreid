@@ -1,6 +1,6 @@
 import os.path as osp
 
-from torchreid.utils import read_image
+from pi_torchreid.utils import read_image
 
 
 class Dataset:

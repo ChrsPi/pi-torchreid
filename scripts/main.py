@@ -14,8 +14,8 @@ from default_config import (
 import torch
 import torch.nn as nn
 
-import torchreid
-from torchreid.utils import (
+import pi_torchreid
+from pi_torchreid.utils import (
     Logger,
     check_isfile,
     collect_env_info,
@@ -30,15 +30,15 @@ from torchreid.utils import (
 
 def build_datamanager(cfg):
     if cfg.data.type == "image":
-        return torchreid.data.ImageDataManager(**imagedata_kwargs(cfg))
+        return pi_torchreid.data.ImageDataManager(**imagedata_kwargs(cfg))
     else:
-        return torchreid.data.VideoDataManager(**videodata_kwargs(cfg))
+        return pi_torchreid.data.VideoDataManager(**videodata_kwargs(cfg))
 
 
 def build_engine(cfg, datamanager, model, optimizer, scheduler):
     if cfg.data.type == "image":
         if cfg.loss.name == "softmax":
-            engine = torchreid.engine.ImageSoftmaxEngine(
+            engine = pi_torchreid.engine.ImageSoftmaxEngine(
                 datamanager,
                 model,
                 optimizer=optimizer,
@@ -48,7 +48,7 @@ def build_engine(cfg, datamanager, model, optimizer, scheduler):
             )
 
         else:
-            engine = torchreid.engine.ImageTripletEngine(
+            engine = pi_torchreid.engine.ImageTripletEngine(
                 datamanager,
                 model,
                 optimizer=optimizer,
@@ -62,7 +62,7 @@ def build_engine(cfg, datamanager, model, optimizer, scheduler):
 
     else:
         if cfg.loss.name == "softmax":
-            engine = torchreid.engine.VideoSoftmaxEngine(
+            engine = pi_torchreid.engine.VideoSoftmaxEngine(
                 datamanager,
                 model,
                 optimizer=optimizer,
@@ -73,7 +73,7 @@ def build_engine(cfg, datamanager, model, optimizer, scheduler):
             )
 
         else:
-            engine = torchreid.engine.VideoTripletEngine(
+            engine = pi_torchreid.engine.VideoTripletEngine(
                 datamanager,
                 model,
                 optimizer=optimizer,
@@ -141,7 +141,7 @@ def main():
     datamanager = build_datamanager(cfg)
 
     logger.info("Building model: %s", cfg.model.name)
-    model = torchreid.models.build_model(
+    model = pi_torchreid.models.build_model(
         name=cfg.model.name,
         num_classes=datamanager.num_train_pids,
         loss=cfg.loss.name,
@@ -157,8 +157,8 @@ def main():
     if cfg.use_gpu:
         model = nn.DataParallel(model).cuda()
 
-    optimizer = torchreid.optim.build_optimizer(model, **optimizer_kwargs(cfg))
-    scheduler = torchreid.optim.build_lr_scheduler(optimizer, **lr_scheduler_kwargs(cfg))
+    optimizer = pi_torchreid.optim.build_optimizer(model, **optimizer_kwargs(cfg))
+    scheduler = pi_torchreid.optim.build_lr_scheduler(optimizer, **lr_scheduler_kwargs(cfg))
 
     if cfg.model.resume and check_isfile(cfg.model.resume):
         cfg.train.start_epoch = resume_from_checkpoint(

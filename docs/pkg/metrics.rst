@@ -1,25 +1,25 @@
 .. _torchreid_metrics:
 
-torchreid.metrics
+pi_torchreid.metrics
 =================
 
 
 Distance
 ---------
 
-.. automodule:: torchreid.metrics.distance
+.. automodule:: pi_torchreid.metrics.distance
     :members:
 
 
 Accuracy
 --------
 
-.. automodule:: torchreid.metrics.accuracy
+.. automodule:: pi_torchreid.metrics.accuracy
     :members:
 
 
 Rank
 -----
 
-.. automodule:: torchreid.metrics.rank
+.. automodule:: pi_torchreid.metrics.rank
     :members: evaluate_rank

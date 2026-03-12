@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from torchreid import metrics
+from pi_torchreid import metrics
 
 
 @pytest.mark.skipif(
@@ -77,7 +77,7 @@ def test_cython_rank_speed():
 
     setup = f"""
 import numpy as np
-from torchreid import metrics
+from pi_torchreid import metrics
 np.random.seed(42)
 distmat = np.random.rand({num_q}, {num_g}).astype(np.float32) * 20
 q_pids = np.random.randint(0, {num_q}, size={num_q})

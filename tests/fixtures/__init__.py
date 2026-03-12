@@ -1,1 +1,1 @@
-"""Test fixtures and mock utilities for torchreid tests."""
+"""Test fixtures and mock utilities for pi_torchreid tests."""

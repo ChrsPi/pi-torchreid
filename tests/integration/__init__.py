@@ -1,1 +1,1 @@
-"""Integration tests for torchreid."""
+"""Integration tests for pi_torchreid."""

@@ -6,7 +6,7 @@ import subprocess
 import pandas as pd
 import torch
 
-from torchreid.utils.feature_extractor import FeatureExtractor
+from pi_torchreid.utils.feature_extractor import FeatureExtractor
 
 __model_types = [
     "resnet50",

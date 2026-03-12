@@ -1,6 +1,6 @@
-from torchreid import metrics
-from torchreid.engine import Engine
-from torchreid.losses import CrossEntropyLoss
+from pi_torchreid import metrics
+from pi_torchreid.engine import Engine
+from pi_torchreid.losses import CrossEntropyLoss
 
 
 class ImageSoftmaxNASEngine(Engine):

@@ -16,8 +16,8 @@ from softmax_nas import ImageSoftmaxNASEngine
 import torch
 import torch.nn as nn
 
-import torchreid
-from torchreid.utils import (
+import pi_torchreid
+from pi_torchreid.utils import (
     Logger,
     check_isfile,
     collect_env_info,
@@ -77,7 +77,7 @@ def main():
     if cfg.use_gpu:
         torch.backends.cudnn.benchmark = True
 
-    datamanager = torchreid.data.ImageDataManager(**imagedata_kwargs(cfg))
+    datamanager = pi_torchreid.data.ImageDataManager(**imagedata_kwargs(cfg))
 
     print(f"Building model: {cfg.model.name}")
     model = osnet_models.build_model(cfg.model.name, num_classes=datamanager.num_train_pids)
@@ -87,8 +87,8 @@ def main():
     if cfg.use_gpu:
         model = nn.DataParallel(model).cuda()
 
-    optimizer = torchreid.optim.build_optimizer(model, **optimizer_kwargs(cfg))
-    scheduler = torchreid.optim.build_lr_scheduler(optimizer, **lr_scheduler_kwargs(cfg))
+    optimizer = pi_torchreid.optim.build_optimizer(model, **optimizer_kwargs(cfg))
+    scheduler = pi_torchreid.optim.build_lr_scheduler(optimizer, **lr_scheduler_kwargs(cfg))
 
     if cfg.model.resume and check_isfile(cfg.model.resume):
         cfg.train.start_epoch = resume_from_checkpoint(cfg.model.resume, model, optimizer=optimizer)

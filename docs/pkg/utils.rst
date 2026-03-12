@@ -1,41 +1,41 @@
 .. _torchreid_utils:
 
-torchreid.utils
+pi_torchreid.utils
 =================
 
 Average Meter
 --------------
 
-.. automodule:: torchreid.utils.avgmeter
+.. automodule:: pi_torchreid.utils.avgmeter
     :members:
 
 
 Loggers
 -------
 
-.. automodule:: torchreid.utils.loggers
+.. automodule:: pi_torchreid.utils.loggers
     :members:
 
 
 Generic Tools
 ---------------
-.. automodule:: torchreid.utils.tools
+.. automodule:: pi_torchreid.utils.tools
     :members:
 
 
 ReID Tools
 ----------
 
-.. automodule:: torchreid.utils.reidtools
+.. automodule:: pi_torchreid.utils.reidtools
     :members:
 
 
 Torch Tools
 ------------
 
-.. automodule:: torchreid.utils.torchtools
+.. automodule:: pi_torchreid.utils.torchtools
     :members:
 
 
-.. automodule:: torchreid.utils.model_complexity
+.. automodule:: pi_torchreid.utils.model_complexity
     :members:

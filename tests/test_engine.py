@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
-import torchreid
+import pi_torchreid
 
 
 class DummyDataset(Dataset):
@@ -37,7 +37,7 @@ class DummyDataManager:
         return None, None
 
 
-class DummyEngine(torchreid.engine.Engine):
+class DummyEngine(pi_torchreid.engine.Engine):
     def forward_backward(self, data):
         return {"loss": 0.0}
 
@@ -114,7 +114,7 @@ def test_image_softmax_engine_forward_backward():
     model = DummySoftmaxModel(num_classes=3)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
-    engine = torchreid.engine.ImageSoftmaxEngine(
+    engine = pi_torchreid.engine.ImageSoftmaxEngine(
         datamanager,
         model,
         optimizer,
@@ -133,7 +133,7 @@ def test_image_triplet_engine_forward_backward():
     model = DummyTripletModel(num_classes=3)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
-    engine = torchreid.engine.ImageTripletEngine(
+    engine = pi_torchreid.engine.ImageTripletEngine(
         datamanager,
         model,
         optimizer,
@@ -155,7 +155,7 @@ def test_image_triplet_engine_weight_combinations():
     model = DummyTripletModel(num_classes=3)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
-    engine = torchreid.engine.ImageTripletEngine(
+    engine = pi_torchreid.engine.ImageTripletEngine(
         datamanager,
         model,
         optimizer,
@@ -176,7 +176,7 @@ def test_video_softmax_pooling():
     model = DummySoftmaxModel(num_classes=3)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
-    engine = torchreid.engine.VideoSoftmaxEngine(
+    engine = pi_torchreid.engine.VideoSoftmaxEngine(
         datamanager,
         model,
         optimizer,

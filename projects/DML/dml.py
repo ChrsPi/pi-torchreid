@@ -1,9 +1,9 @@
 import torch
 from torch.nn import functional as F
 
-from torchreid.engine import Engine
-from torchreid.losses import CrossEntropyLoss, TripletLoss
-from torchreid.utils import open_all_layers, open_specified_layers
+from pi_torchreid.engine import Engine
+from pi_torchreid.losses import CrossEntropyLoss, TripletLoss
+from pi_torchreid.utils import open_all_layers, open_specified_layers
 
 
 class ImageDMLEngine(Engine):

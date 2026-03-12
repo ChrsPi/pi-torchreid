@@ -4,8 +4,8 @@ from setuptools import Extension, setup
 
 ext_modules = [
     Extension(
-        "torchreid.metrics.rank_cylib.rank_cy",
-        ["torchreid/metrics/rank_cylib/rank_cy.pyx"],
+        "pi_torchreid.metrics.rank_cylib.rank_cy",
+        ["pi_torchreid/metrics/rank_cylib/rank_cy.pyx"],
         include_dirs=[np.get_include()],
     )
 ]

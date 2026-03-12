@@ -7,7 +7,7 @@ import pytest
 import torch
 from yacs.config import CfgNode as CN  # noqa: N817
 
-from torchreid.data.transforms import (
+from pi_torchreid.data.transforms import (
     DeterministicBrightness,
     DeterministicContrast,
     DeterministicRotation,

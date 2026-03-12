@@ -3,8 +3,8 @@
 from torchvision.transforms import v2
 from yacs.config import CfgNode as CN  # noqa: N817
 
+from pi_torchreid.data.transforms import RandomPatch, build_transforms
 from scripts.default_config import get_default_config
-from torchreid.data.transforms import RandomPatch, build_transforms
 
 
 def test_empty_transform_list_is_noop_not_random_flip():

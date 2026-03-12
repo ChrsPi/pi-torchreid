@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
-project = "torchreid"
+project = "pi-torchreid"
 copyright = "2019, Kaiyang Zhou"
 author = "Kaiyang Zhou"
 
-version_file = "../torchreid/__init__.py"
+version_file = "../pi_torchreid/__init__.py"
 with open(version_file) as f:
     exec(compile(f.read(), version_file, "exec"))
 __version__ = locals()["__version__"]
@@ -108,7 +108,7 @@ html_static_path = ["_static"]
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "torchreiddoc"
+htmlhelp_basename = "pi-torchreiddoc"
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -131,14 +131,14 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "torchreid.tex", "torchreid Documentation", "Kaiyang Zhou", "manual"),
+    (master_doc, "pi_torchreid.tex", "pi-torchreid Documentation", "Kaiyang Zhou", "manual"),
 ]
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "torchreid", "torchreid Documentation", [author], 1)]
+man_pages = [(master_doc, "pi-torchreid", "pi-torchreid Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -148,10 +148,10 @@ man_pages = [(master_doc, "torchreid", "torchreid Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "torchreid",
-        "torchreid Documentation",
+        "pi-torchreid",
+        "pi-torchreid Documentation",
         author,
-        "torchreid",
+        "pi-torchreid",
         "One line description of project.",
         "Miscellaneous",
     ),

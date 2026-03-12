@@ -2,9 +2,9 @@
 
 import pytest
 
+from pi_torchreid.data.datasets import Dataset, ImageDataset
+from pi_torchreid.data.sampler import build_train_sampler
 from tests.fixtures.mock_datasets import create_mock_image_dataset
-from torchreid.data.datasets import Dataset, ImageDataset
-from torchreid.data.sampler import build_train_sampler
 
 
 class TestDataset:

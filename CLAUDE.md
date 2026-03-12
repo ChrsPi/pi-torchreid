@@ -32,7 +32,7 @@ uv sync
 uv sync --extra dev
 
 # Verify installation
-uv run python -c "import torchreid; print(torchreid.__version__)"
+uv run python -c "import pi_torchreid; print(pi_torchreid.__version__)"
 ```
 
 ### Docker
@@ -86,7 +86,7 @@ uv run python scripts/main.py \
 uv run pytest
 
 # Run with coverage report
-uv run pytest --cov=torchreid --cov-report=html
+uv run pytest --cov=pi_torchreid --cov-report=html
 
 # Run specific test file
 uv run pytest tests/test_models.py
@@ -111,7 +111,7 @@ uv run pytest -m "not slow"
 
 **Testing Cython Build (legacy):**
 ```bash
-uv run python torchreid/metrics/rank_cylib/test_cython.py
+uv run python pi_torchreid/metrics/rank_cylib/test_cython.py
 # Note: This test has been moved to tests/test_cython_rank.py
 ```
 
@@ -126,7 +126,7 @@ The repository uses GitHub Actions for automated testing and linting (see `.gith
 
 ## Architecture
 
-### Core Package Structure (`torchreid/`)
+### Core Package Structure (`pi_torchreid/`)
 
 - **`data/`** - Data loading and augmentation
   - `datamanager.py`: `ImageDataManager` and `VideoDataManager` classes
@@ -179,8 +179,8 @@ Dataset items are 4-tuples: `(impath, pid, camid, dsetid)` where `dsetid` identi
 ### Model Factory Pattern
 
 ```python
-import torchreid
-model = torchreid.models.build_model(
+import pi_torchreid
+model = pi_torchreid.models.build_model(
     name='osnet_x1_0',
     num_classes=751,
     loss='softmax',  # or 'triplet'
@@ -191,7 +191,7 @@ model = torchreid.models.build_model(
 ### Feature Extraction API
 
 ```python
-from torchreid.utils import FeatureExtractor
+from pi_torchreid.utils import FeatureExtractor
 extractor = FeatureExtractor(model_name='osnet_x1_0', model_path='checkpoint.pth')
 features = extractor(image_list)
 ```

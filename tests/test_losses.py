@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchreid.losses import CrossEntropyLoss, DeepSupervision, TripletLoss
+from pi_torchreid.losses import CrossEntropyLoss, DeepSupervision, TripletLoss
 
 
 class TestCrossEntropyLoss:

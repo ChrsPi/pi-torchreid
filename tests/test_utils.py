@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import torch
 
-from torchreid.models import build_model
-from torchreid.utils import (
+from pi_torchreid.models import build_model
+from pi_torchreid.utils import (
     check_isfile,
     compute_model_complexity,
     count_num_param,
