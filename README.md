@@ -188,7 +188,7 @@ datamanager = torchreid.data.ImageDataManager(
     width=128,
     batch_size_train=32,
     batch_size_test=100,
-    transforms=["random_flip", "random_crop"]
+    transforms=["RandomHorizontalFlip", "random_crop"]
 )
 ```
 
@@ -253,13 +253,15 @@ Below we provide an example to train and test [OSNet (Zhou et al. ICCV'19)](http
 Training and test transforms are now built from `torchreid.data.transforms` using a config-driven backend (`aug.backend: torchvision_v2`).
 
 - Basic train-time toggle list: `data.transforms`
-  - Supported names: `random_flip`, `random_crop`, `color_jitter`, `random_erase`, `random_patch`, `rand_augment`
+  - Shortcut tokens stay lowercase: `random_crop`, `random_erase`, `random_patch`, `rand_augment`
+  - Torchvision v2 passthrough transforms use PascalCase, e.g. `RandomHorizontalFlip`, `ColorJitter`
+  - Legacy aliases `random_flip` and `color_jitter` are still accepted for migration, but new configs should use the canonical names above
 - Detailed params: `aug.train.<name>.*`
 - Evaluation degradations: `aug.test.*` (`jpeg`, `resolution`, `grayscale`, `rotation`, `gaussian_blur`, `gaussian_noise`, `brightness`, `contrast`)
 
 Behavior details:
 
-- `data.transforms: []` means no stochastic train augmentations (no fallback to `random_flip`)
+- `data.transforms: []` means no stochastic train augmentations (no fallback to `RandomHorizontalFlip`)
 - `aug.disable_stochastic: True` disables all stochastic train transforms, including ones listed in `data.transforms`
 - Normalization uses `data.norm_mean` / `data.norm_std` as final values; these override `aug.normalize.mean` / `aug.normalize.std`
 
@@ -282,7 +284,7 @@ To train OSNet on Market1501, do
 ```bash
 uv run python scripts/main.py \
   --config-file configs/im_osnet_x1_0_softmax_256x128_amsgrad_cosine.yaml \
-  --transforms random_flip random_erase \
+  --transforms RandomHorizontalFlip random_erase \
   --root $PATH_TO_DATA
 ```
 
@@ -294,7 +296,7 @@ uv run python scripts/main.py \
   --config-file configs/im_osnet_x1_0_softmax_256x128_amsgrad_cosine.yaml \
   -s dukemtmcreid \
   -t dukemtmcreid \
-  --transforms random_flip random_erase \
+  --transforms RandomHorizontalFlip random_erase \
   --root $PATH_TO_DATA \
   data.save_dir log/osnet_x1_0_dukemtmcreid_softmax_cosinelr
 ```
@@ -321,15 +323,37 @@ uv run python scripts/main.py \
   --config-file configs/im_osnet_x1_0_softmax_256x128_amsgrad.yaml \
   -s dukemtmcreid \
   -t market1501 \
-  --transforms random_flip color_jitter \
+  --transforms RandomHorizontalFlip ColorJitter \
   --root $PATH_TO_DATA
 ```
 
 Here we only test the cross-domain performance. However, if you also want to test the performance on the source dataset, i.e. DukeMTMC-reID, you can set `-t dukemtmcreid market1501`, which will evaluate the model on the two datasets separately.
 
-Different from the same-domain setting, here we replace `random_erase` with `color_jitter`. This can improve the generalization performance on the unseen target dataset.
+Different from the same-domain setting, here we replace `random_erase` with `ColorJitter`. This can improve the generalization performance on the unseen target dataset.
 
 Pretrained models are available in the [Model Zoo](https://kaiyangzhou.github.io/deep-person-reid/MODEL_ZOO.html).
+
+### Offline feature extraction
+
+`FeatureExtractor` is available from `torchreid.utils` and can reuse the same evaluation preprocessing as `ImageDataManager`.
+
+```python
+from scripts.default_config import get_default_config
+from torchreid.utils import FeatureExtractor
+
+cfg = get_default_config()
+cfg.data.height = 256
+cfg.data.width = 128
+cfg.aug.test.jpeg.enabled = True
+cfg.aug.test.jpeg.quality = 30
+
+extractor = FeatureExtractor(
+    model_name="osnet_x1_0",
+    model_path="checkpoint.pth.tar",
+    cfg=cfg,
+    device="cuda",
+)
+```
 
 
 ## Datasets

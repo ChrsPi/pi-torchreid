@@ -17,7 +17,7 @@ data:
   height: 256
   width: 128
   combineall: True
-  transforms: ['random_flip', 'color_jitter']
+  transforms: ['RandomHorizontalFlip', 'ColorJitter']
   save_dir: 'log/osnet_nas'
 
 loss:

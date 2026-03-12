@@ -58,14 +58,14 @@ uv run ruff format .
 # Train OSNet on Market1501
 uv run python scripts/main.py \
   --config-file configs/im_osnet_x1_0_softmax_256x128_amsgrad_cosine.yaml \
-  --transforms random_flip random_erase \
+  --transforms RandomHorizontalFlip random_erase \
   --root $PATH_TO_DATA
 
 # Cross-domain: train on DukeMTMC, test on Market1501
 uv run python scripts/main.py \
   --config-file configs/im_osnet_x1_0_softmax_256x128_amsgrad.yaml \
   -s dukemtmcreid -t market1501 \
-  --transforms random_flip color_jitter \
+  --transforms RandomHorizontalFlip ColorJitter \
   --root $PATH_TO_DATA
 ```
 
@@ -131,7 +131,7 @@ The repository uses GitHub Actions for automated testing and linting (see `.gith
 - **`data/`** - Data loading and augmentation
   - `datamanager.py`: `ImageDataManager` and `VideoDataManager` classes
   - `sampler.py`: Custom samplers (`RandomIdentitySampler`, `RandomDomainSampler`, `RandomDatasetSampler`)
-  - `transforms.py`: Augmentations (random_flip, random_erase, color_jitter, etc.)
+  - `data/transforms/__init__.py`: Augmentations (`RandomHorizontalFlip`, `random_erase`, `ColorJitter`, etc.)
   - `datasets/image/`: 13+ image re-ID datasets (market1501, cuhk03, dukemtmcreid, msmt17, etc.)
   - `datasets/video/`: 4 video re-ID datasets (mars, ilids, prid2011, dukemtmc-videoreid)
 

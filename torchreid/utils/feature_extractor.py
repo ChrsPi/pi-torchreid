@@ -1,10 +1,11 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 import numpy as np
 from PIL import Image
 import torch
 import torchvision.transforms as T
 
+from torchreid.data.transforms import build_transforms
 from torchreid.models import build_model
 from torchreid.utils import check_isfile, compute_model_complexity, load_pretrained_weights
 from torchreid.utils.logging_config import logger
@@ -31,6 +32,9 @@ class FeatureExtractor:
         pixel_mean (list): pixel mean for normalization.
         pixel_std (list): pixel std for normalization.
         pixel_norm (bool): whether to normalize pixels.
+        cfg: optional config object used to build the shared evaluation transform.
+        preprocess: optional prebuilt preprocessing callable. If provided, it
+            overrides ``cfg`` and the simple built-in resize/normalize path.
         device (str): 'cpu' or 'cuda' (could be specific gpu devices).
         verbose (bool): show model details.
 
@@ -64,6 +68,8 @@ class FeatureExtractor:
         pixel_mean: Sequence[float] | None = None,
         pixel_std: Sequence[float] | None = None,
         pixel_norm: bool = True,
+        cfg: object | None = None,
+        preprocess: Callable | None = None,
         device: str = "cuda",
         verbose: bool = True,
     ) -> None:
@@ -89,13 +95,23 @@ class FeatureExtractor:
         if model_path and check_isfile(model_path):
             load_pretrained_weights(model, model_path)
 
-        # Build transform functions
-        transforms = []
-        transforms += [T.Resize(image_size)]
-        transforms += [T.ToTensor()]
-        if pixel_norm:
-            transforms += [T.Normalize(mean=pixel_mean, std=pixel_std)]
-        preprocess = T.Compose(transforms)
+        # Reuse the shared evaluation pipeline when cfg is provided; otherwise keep
+        # the historical simple preprocessing behavior.
+        if preprocess is None and cfg is not None:
+            _, preprocess = build_transforms(
+                image_size[0],
+                image_size[1],
+                norm_mean=pixel_mean,
+                norm_std=pixel_std,
+                cfg=cfg,
+            )
+        if preprocess is None:
+            transforms = []
+            transforms += [T.Resize(image_size)]
+            transforms += [T.ToTensor()]
+            if pixel_norm:
+                transforms += [T.Normalize(mean=pixel_mean, std=pixel_std)]
+            preprocess = T.Compose(transforms)
 
         to_pil = T.ToPILImage()
 

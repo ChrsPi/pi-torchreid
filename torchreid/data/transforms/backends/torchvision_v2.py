@@ -17,6 +17,7 @@ from torchreid.data.transforms.augmentations import (
     RandomPatch,
     ResolutionDegradation,
 )
+from torchreid.data.transforms.names import LEGACY_TRANSFORM_ALIASES, canonicalize_transform_list
 from torchreid.utils import logger
 
 # Shortcut tokens: names with custom build logic that can't be expressed
@@ -34,11 +35,7 @@ SHORTCUT_TOKENS = frozenset(
 def _get_transform_names(cfg: Any) -> list[str]:
     """Return list of transform names from config."""
     names = getattr(cfg.data, "transforms", None)
-    if names is None:
-        names = []
-    if isinstance(names, str):
-        names = [names]
-    return [str(x) for x in names]
+    return canonicalize_transform_list(names)
 
 
 def _get_img_size(cfg: Any) -> tuple[int, int]:
@@ -171,7 +168,10 @@ def _validate_transform_names(names: list[str]) -> None:
         raise ValueError(
             f"Unknown transform: {name!r}. "
             f"Shortcut tokens: {shortcuts}. "
-            f"You can also use any torchvision.transforms.v2 class name (PascalCase)."
+            "Legacy aliases: "
+            + ", ".join(f"{alias}->{canonical}" for alias, canonical in sorted(LEGACY_TRANSFORM_ALIASES.items()))
+            + ". "
+            "You can also use any torchvision.transforms.v2 class name (PascalCase)."
         )
 
 
