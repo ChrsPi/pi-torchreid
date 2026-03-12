@@ -83,3 +83,25 @@ def test_feature_extractor_preprocess_override_beats_cfg(monkeypatch):
     features = extractor(np.zeros((10, 6, 3), dtype=np.uint8))
 
     assert torch.equal(features, expected.unsqueeze(0))
+
+
+def test_feature_extractor_verbose_flops_uses_cfg_image_size(monkeypatch):
+    monkeypatch.setattr(feature_extractor_module, "build_model", _stub_model)
+    cfg = _make_cfg()
+    complexity_calls = []
+
+    def _stub_complexity(model, input_size):
+        complexity_calls.append(input_size)
+        return 1, 2
+
+    monkeypatch.setattr(feature_extractor_module, "compute_model_complexity", _stub_complexity)
+
+    feature_extractor_module.FeatureExtractor(
+        model_name="ignored",
+        image_size=(256, 128),
+        cfg=cfg,
+        device="cpu",
+        verbose=True,
+    )
+
+    assert complexity_calls == [(1, 3, cfg.data.height, cfg.data.width)]

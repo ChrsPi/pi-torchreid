@@ -11,6 +11,21 @@ from torchreid.utils import check_isfile, compute_model_complexity, load_pretrai
 from torchreid.utils.logging_config import logger
 
 
+def _resolve_image_size(image_size: Sequence[int] | int, cfg: object | None) -> tuple[int, int]:
+    """Prefer cfg-provided dimensions when available."""
+    if isinstance(image_size, int):
+        resolved_size = (image_size, image_size)
+    else:
+        resolved_size = (int(image_size[0]), int(image_size[1]))
+
+    data_cfg = getattr(cfg, "data", None)
+    height = getattr(data_cfg, "height", None)
+    width = getattr(data_cfg, "width", None)
+    if height is None or width is None:
+        return resolved_size
+    return int(height), int(width)
+
+
 class FeatureExtractor:
     """A simple API for feature extraction.
 
@@ -86,8 +101,13 @@ class FeatureExtractor:
         )
         model.eval()
 
+        effective_image_size = _resolve_image_size(image_size, cfg)
+
         if verbose:
-            num_params, flops = compute_model_complexity(model, (1, 3, image_size[0], image_size[1]))
+            num_params, flops = compute_model_complexity(
+                model,
+                (1, 3, effective_image_size[0], effective_image_size[1]),
+            )
             logger.info("Model: %s", model_name)
             logger.info("- params: %s", f"{num_params:,}")
             logger.info("- flops: %s", f"{flops:,}")
@@ -99,15 +119,15 @@ class FeatureExtractor:
         # the historical simple preprocessing behavior.
         if preprocess is None and cfg is not None:
             _, preprocess = build_transforms(
-                image_size[0],
-                image_size[1],
+                effective_image_size[0],
+                effective_image_size[1],
                 norm_mean=pixel_mean,
                 norm_std=pixel_std,
                 cfg=cfg,
             )
         if preprocess is None:
             transforms = []
-            transforms += [T.Resize(image_size)]
+            transforms += [T.Resize(effective_image_size)]
             transforms += [T.ToTensor()]
             if pixel_norm:
                 transforms += [T.Normalize(mean=pixel_mean, std=pixel_std)]

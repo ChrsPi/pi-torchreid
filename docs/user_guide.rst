@@ -384,10 +384,21 @@ To reuse the same evaluation preprocessing as ``ImageDataManager``, pass the tra
 
 .. code-block:: python
 
-    from scripts.default_config import get_default_config
+    from yacs.config import CfgNode as CN
     from torchreid.utils import FeatureExtractor
 
-    cfg = get_default_config()
+    cfg = CN()
+    cfg.data = CN()
+    cfg.data.height = 256
+    cfg.data.width = 128
+    cfg.data.norm_mean = [0.485, 0.456, 0.406]
+    cfg.data.norm_std = [0.229, 0.224, 0.225]
+    cfg.aug = CN()
+    cfg.aug.backend = "torchvision_v2"
+    cfg.aug.seed = None
+    cfg.aug.disable_stochastic = False
+    cfg.aug.test = CN()
+    cfg.aug.test.brightness = CN()
     cfg.aug.test.brightness.enabled = True
     cfg.aug.test.brightness.factor = 0.7
 

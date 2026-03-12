@@ -17,7 +17,11 @@ from torchreid.data.transforms.augmentations import (
     RandomPatch,
     ResolutionDegradation,
 )
-from torchreid.data.transforms.names import LEGACY_TRANSFORM_ALIASES, canonicalize_transform_list
+from torchreid.data.transforms.names import (
+    LEGACY_TRANSFORM_ALIASES,
+    canonicalize_transform_list,
+    get_transform_config_keys,
+)
 from torchreid.utils import logger
 
 # Shortcut tokens: names with custom build logic that can't be expressed
@@ -146,9 +150,11 @@ def _build_v2_passthrough(name: str, cfg: Any, size: tuple[int, int]) -> Any | N
         return None
     kwargs: dict[str, Any] = {}
     if hasattr(cfg, "aug") and hasattr(cfg.aug, "train"):
-        sub = getattr(cfg.aug.train, name, None)
-        if sub is not None and hasattr(sub, "items"):
-            kwargs = {k: val for k, val in sub.items() if k != "enabled"}
+        for config_key in get_transform_config_keys(name):
+            sub = getattr(cfg.aug.train, config_key, None)
+            if sub is not None and hasattr(sub, "items"):
+                kwargs = {k: val for k, val in sub.items() if k != "enabled"}
+                break
     # Auto-inject size if the transform expects it and user didn't provide it
     if "size" not in kwargs:
         sig = inspect.signature(cls)

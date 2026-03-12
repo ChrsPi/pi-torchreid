@@ -1,6 +1,7 @@
 """Regression tests for torchvision v2 backend config handling."""
 
 from torchvision.transforms import v2
+from yacs.config import CfgNode as CN  # noqa: N817
 
 from scripts.default_config import get_default_config
 from torchreid.data.transforms import RandomPatch, build_transforms
@@ -89,3 +90,18 @@ def test_disable_stochastic_blocks_data_transform_shortcut():
     assert not any(isinstance(t, RandomPatch) for t in transform_tr.transforms)
     assert not any(isinstance(t, v2.RandAugment) for t in transform_tr.transforms)
     assert not any(isinstance(t, v2.RandomErasing) for t in transform_tr.transforms)
+
+
+def test_legacy_color_jitter_subtree_applies_to_passthrough_transform():
+    """Legacy snake_case config keys should still configure canonical passthrough transforms."""
+    cfg = get_default_config()
+    cfg.data.transforms = ["color_jitter"]
+    cfg.aug.train.color_jitter = CN()
+    cfg.aug.train.color_jitter.brightness = (0.1, 0.2)
+    cfg.aug.train.color_jitter.contrast = (0.3, 0.4)
+
+    transform_tr, _ = build_transforms(256, 128, cfg=cfg)
+    color_jitter = next(t for t in transform_tr.transforms if isinstance(t, v2.ColorJitter))
+
+    assert color_jitter.brightness == (0.1, 0.2)
+    assert color_jitter.contrast == (0.3, 0.4)
