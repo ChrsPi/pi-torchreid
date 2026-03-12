@@ -1,7 +1,7 @@
 .. _torchreid_losses:
 
 pi_torchreid.losses
-=================
+===================
 
 
 Softmax

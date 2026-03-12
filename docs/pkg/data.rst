@@ -1,7 +1,7 @@
 .. _torchreid_data:
 
 pi_torchreid.data
-==============
+=================
 
 
 Data Manager

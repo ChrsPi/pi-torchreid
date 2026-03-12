@@ -1,4 +1,4 @@
-.. _torchreid_utils:
+.. _pi_torchreid_utils:
 
 pi_torchreid.utils
 =================

@@ -83,6 +83,7 @@ def build_engine(cfg, datamanager, model, optimizer, scheduler):
                 scheduler=scheduler,
                 use_gpu=cfg.use_gpu,
                 label_smooth=cfg.loss.softmax.label_smooth,
+                pooling_method=cfg.video.pooling_method,
             )
 
     return engine

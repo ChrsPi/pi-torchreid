@@ -1,7 +1,7 @@
 .. _torchreid_models:
 
 pi_torchreid.models
-=================
+===================
 
 Interface
 ---------

@@ -31,7 +31,7 @@ The default ``train_sampler`` is "RandomSampler". You can give the specific samp
 
 Choose an optimizer/lr_scheduler
 ----------------------------------
-Please refer to the source code of ``build_optimizer``/``build_lr_scheduler`` in :ref:`torchreid_optim` for details.
+Please refer to the source code of ``build_optimizer``/``build_lr_scheduler`` in :ref:`pi_torchreid_optim` for details.
 
 
 Configure augmentation
@@ -198,7 +198,7 @@ Below is an example of setting different learning rates for base layers and new 
         base_lr_mult=0.1
     )
 
-Please refer to :ref:`torchreid_optim` for more details.
+Please refer to :ref:`pi_torchreid_optim` for more details.
 
 
 Do two-stepped transfer learning
@@ -355,8 +355,8 @@ Design your own Engine
 A new Engine should be designed if you have your own loss function. The base Engine class ``pi_torchreid.engine.Engine`` has implemented some generic methods which you can inherit to avoid re-writing. Please refer to the source code for more details. You are suggested to see how ``ImageSoftmaxEngine`` and ``ImageTripletEngine`` are constructed (also ``VideoSoftmaxEngine`` and ``VideoTripletEngine``). All you need to implement might be just a ``forward_backward()`` function.
 
 
-Use Torchreid as a feature extractor in your projects
--------------------------------------------------------
+Use pi_torchreid as a feature extractor in your projects
+--------------------------------------------------------
 We have provided a simple API for feature extraction, which accepts input of various types such as a list of image paths or numpy arrays. More details can be found in the code at ``pi_torchreid/utils/feature_extractor.py``. Here we show a simple example of how to extract features given a list of image paths.
 
 .. code-block:: python

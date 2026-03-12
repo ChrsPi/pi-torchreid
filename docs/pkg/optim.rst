@@ -1,4 +1,4 @@
-.. _torchreid_optim:
+.. _pi_torchreid_optim:
 
 pi_torchreid.optim
 =================

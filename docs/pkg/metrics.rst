@@ -1,4 +1,4 @@
-.. _torchreid_metrics:
+.. _pi_torchreid_metrics:
 
 pi_torchreid.metrics
 =================
