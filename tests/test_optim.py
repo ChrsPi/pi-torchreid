@@ -4,7 +4,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from torchreid.optim import build_lr_scheduler, build_optimizer
+from pi_torchreid.optim import build_lr_scheduler, build_optimizer
 
 
 class TestBuildOptimizer:

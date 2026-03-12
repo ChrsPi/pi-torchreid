@@ -1,18 +1,18 @@
 .. _torchreid_losses:
 
-torchreid.losses
-=================
+pi_torchreid.losses
+===================
 
 
 Softmax
 --------
 
-.. automodule:: torchreid.losses.cross_entropy_loss
+.. automodule:: pi_torchreid.losses.cross_entropy_loss
     :members:
 
 
 Triplet
 -------
 
-.. automodule:: torchreid.losses.hard_mine_triplet_loss
+.. automodule:: pi_torchreid.losses.hard_mine_triplet_loss
     :members:

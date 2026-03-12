@@ -1,1 +1,1 @@
-"""Test suite for torchreid."""
+"""Test suite for pi_torchreid."""

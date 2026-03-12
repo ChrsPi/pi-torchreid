@@ -1,7 +1,7 @@
 # Model Zoo
 
 - Results are presented in the format of *<Rank-1 (mAP)>*.
-- When computing model size and FLOPs, only layers that are used at test time are considered (see `torchreid.utils.compute_model_complexity`).
+- When computing model size and FLOPs, only layers that are used at test time are considered (see `pi_torchreid.utils.compute_model_complexity`).
 - Asterisk (\*) means the model is trained from scratch.
 - `combineall=True` means all images in the dataset are used for model training.
 - Why not use heavy data augmentation like [random erasing](https://arxiv.org/abs/1708.04896) for model training? It's because heavy data augmentation might harm the cross-dataset generalization performance (see [this paper](https://arxiv.org/abs/1708.04896)).

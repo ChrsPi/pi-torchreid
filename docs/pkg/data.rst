@@ -1,95 +1,95 @@
 .. _torchreid_data:
 
-torchreid.data
-==============
+pi_torchreid.data
+=================
 
 
 Data Manager
 ---------------------------
 
-.. automodule:: torchreid.data.datamanager
+.. automodule:: pi_torchreid.data.datamanager
     :members:
 
 
 Sampler
 -----------------------
 
-.. automodule:: torchreid.data.sampler
+.. automodule:: pi_torchreid.data.sampler
     :members:
 
 
 Transforms
 ---------------------------
 
-.. automodule:: torchreid.data.transforms
+.. automodule:: pi_torchreid.data.transforms
     :members:
 
-.. automodule:: torchreid.data.transforms.augmentations
+.. automodule:: pi_torchreid.data.transforms.augmentations
     :members:
 
-.. automodule:: torchreid.data.transforms.backends.base
+.. automodule:: pi_torchreid.data.transforms.backends.base
     :members:
 
-.. automodule:: torchreid.data.transforms.backends.torchvision_v2
+.. automodule:: pi_torchreid.data.transforms.backends.torchvision_v2
     :members:
 
 
 Dataset
 ---------------------------
 
-.. automodule:: torchreid.data.datasets.dataset
+.. automodule:: pi_torchreid.data.datasets.dataset
     :members:
 
 
-.. automodule:: torchreid.data.datasets.__init__
+.. automodule:: pi_torchreid.data.datasets.__init__
     :members:
 
 
 Image Datasets
 ------------------------------
 
-.. automodule:: torchreid.data.datasets.image.market1501
+.. automodule:: pi_torchreid.data.datasets.image.market1501
     :members:
 
-.. automodule:: torchreid.data.datasets.image.cuhk03
+.. automodule:: pi_torchreid.data.datasets.image.cuhk03
     :members:
 
-.. automodule:: torchreid.data.datasets.image.dukemtmcreid
+.. automodule:: pi_torchreid.data.datasets.image.dukemtmcreid
     :members:
 
-.. automodule:: torchreid.data.datasets.image.msmt17
+.. automodule:: pi_torchreid.data.datasets.image.msmt17
     :members:
 
-.. automodule:: torchreid.data.datasets.image.viper
+.. automodule:: pi_torchreid.data.datasets.image.viper
     :members:
 
-.. automodule:: torchreid.data.datasets.image.grid
+.. automodule:: pi_torchreid.data.datasets.image.grid
     :members:
 
-.. automodule:: torchreid.data.datasets.image.cuhk01
+.. automodule:: pi_torchreid.data.datasets.image.cuhk01
     :members:
 
-.. automodule:: torchreid.data.datasets.image.ilids
+.. automodule:: pi_torchreid.data.datasets.image.ilids
     :members:
 
-.. automodule:: torchreid.data.datasets.image.sensereid
+.. automodule:: pi_torchreid.data.datasets.image.sensereid
     :members:
 
-.. automodule:: torchreid.data.datasets.image.prid
+.. automodule:: pi_torchreid.data.datasets.image.prid
     :members:
 
 
 Video Datasets
 ------------------------------
 
-.. automodule:: torchreid.data.datasets.video.mars
+.. automodule:: pi_torchreid.data.datasets.video.mars
     :members:
 
-.. automodule:: torchreid.data.datasets.video.ilidsvid
+.. automodule:: pi_torchreid.data.datasets.video.ilidsvid
     :members:
 
-.. automodule:: torchreid.data.datasets.video.prid2011
+.. automodule:: pi_torchreid.data.datasets.video.prid2011
     :members:
 
-.. automodule:: torchreid.data.datasets.video.dukemtmcvidreid
+.. automodule:: pi_torchreid.data.datasets.video.dukemtmcvidreid
     :members:

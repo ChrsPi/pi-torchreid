@@ -66,9 +66,9 @@ The model weights are also available on Huggingface: https://huggingface.co/kaiy
 - [Aug 2020] ``v1.2.6``: Added ``RandomDomainSampler`` (it samples ``num_cams`` cameras each with ``batch_size // num_cams`` images to form a mini-batch).
 - [Jun 2020] ``v1.2.5``: (1) Dataloader's output from ``__getitem__`` has been changed from ``list`` to ``dict``. Previously, an element, e.g. image tensor, was fetched with ``imgs=data[0]``. Now it should be obtained by ``imgs=data['img']``. See this [commit](https://github.com/KaiyangZhou/deep-person-reid/commit/aefe335d68f39a20160860e6d14c2d34f539b8a5) for detailed changes. (2) Added ``k_tfm`` as an option to image data loader, which allows data augmentation to be applied ``k_tfm`` times *independently* to an image. If ``k_tfm > 1``, ``imgs=data['img']`` returns a list with ``k_tfm`` image tensors.
 - [May 2020] Added the person attribute recognition code used in [Omni-Scale Feature Learning for Person Re-Identification (ICCV'19)](https://arxiv.org/abs/1905.00953). See ``projects/attribute_recognition/``.
-- [May 2020] ``v1.2.1``: Added a simple API for feature extraction (``torchreid/utils/feature_extractor.py``). See the [documentation](https://kaiyangzhou.github.io/deep-person-reid/user_guide.html) for the instruction.
+- [May 2020] ``v1.2.1``: Added a simple API for feature extraction (``pi_torchreid/utils/feature_extractor.py``). See the [documentation](https://kaiyangzhou.github.io/deep-person-reid/user_guide.html) for the instruction.
 - [Apr 2020] Code for reproducing the experiments of [deep mutual learning](https://zpascal.net/cvpr2018/Zhang_Deep_Mutual_Learning_CVPR_2018_paper.pdf) in the [OSNet paper](https://arxiv.org/pdf/1905.00953v6.pdf) (Supp. B) has been released at ``projects/DML``.
-- [Apr 2020] Upgraded to ``v1.2.0``. The engine class has been made more model-agnostic to improve extensibility. See [Engine](torchreid/engine/engine.py) and [ImageSoftmaxEngine](torchreid/engine/image/softmax.py) for more details. Credit to [Dassl.pytorch](https://github.com/KaiyangZhou/Dassl.pytorch).
+- [Apr 2020] Upgraded to ``v1.2.0``. The engine class has been made more model-agnostic to improve extensibility. See [Engine](pi_torchreid/engine/engine.py) and [ImageSoftmaxEngine](pi_torchreid/engine/image/softmax.py) for more details. Credit to [Dassl.pytorch](https://github.com/KaiyangZhou/Dassl.pytorch).
 - [Dec 2019] Our [OSNet paper](https://arxiv.org/pdf/1905.00953v6.pdf) has been updated, with additional experiments (in section B of the supplementary) showing some useful techniques for improving OSNet's performance in practice.
 - [Nov 2019] ``ImageDataManager`` can load training data from target datasets by setting ``load_train_targets=True``, and the train-loader can be accessed with ``train_loader_t = datamanager.train_loader_t``. This feature is useful for domain adaptation research.
 
@@ -98,7 +98,7 @@ source .venv/bin/activate  # On Linux/Mac
 .venv\Scripts\activate     # On Windows
 
 # Verify installation
-uv run python -c "import torchreid; print(torchreid.__version__)"
+uv run python -c "import pi_torchreid; print(pi_torchreid.__version__)"
 ```
 
 ### Docker
@@ -136,7 +136,7 @@ uv sync --extra dev
 uv run pytest
 
 # Run with coverage report
-uv run pytest --cov=torchreid --cov-report=html
+uv run pytest --cov=pi_torchreid --cov-report=html
 
 # Run specific test file
 uv run pytest tests/test_models.py
@@ -169,18 +169,18 @@ The repository also uses [Greptile](https://www.greptile.com/) for AI-assisted c
 
 See [docs/CI_CD.md](docs/CI_CD.md) for more details on the CI/CD setup.
 
-## Get started: 30 seconds to Torchreid
+## Get started: 30 seconds to Pi-Torchreid
 
-1. Import ``torchreid``
+1. Import ``pi_torchreid``
 
 ```python
-import torchreid
+import pi_torchreid
 ```
 
 2. Load data manager
 
 ```python
-datamanager = torchreid.data.ImageDataManager(
+datamanager = pi_torchreid.data.ImageDataManager(
     root="reid-data",
     sources="market1501",
     targets="market1501",
@@ -195,7 +195,7 @@ datamanager = torchreid.data.ImageDataManager(
 3 Build model, optimizer and lr_scheduler
 
 ```python
-model = torchreid.models.build_model(
+model = pi_torchreid.models.build_model(
     name="resnet50",
     num_classes=datamanager.num_train_pids,
     loss="softmax",
@@ -204,13 +204,13 @@ model = torchreid.models.build_model(
 
 model = model.cuda()
 
-optimizer = torchreid.optim.build_optimizer(
+optimizer = pi_torchreid.optim.build_optimizer(
     model,
     optim="adam",
     lr=0.0003
 )
 
-scheduler = torchreid.optim.build_lr_scheduler(
+scheduler = pi_torchreid.optim.build_lr_scheduler(
     optimizer,
     lr_scheduler="single_step",
     stepsize=20
@@ -220,7 +220,7 @@ scheduler = torchreid.optim.build_lr_scheduler(
 4. Build engine
 
 ```python
-engine = torchreid.engine.ImageSoftmaxEngine(
+engine = pi_torchreid.engine.ImageSoftmaxEngine(
     datamanager,
     model,
     optimizer=optimizer,
@@ -250,7 +250,7 @@ Below we provide an example to train and test [OSNet (Zhou et al. ICCV'19)](http
 
 ### Augmentation pipeline (torchvision v2)
 
-Training and test transforms are now built from `torchreid.data.transforms` using a config-driven backend (`aug.backend: torchvision_v2`).
+Training and test transforms are now built from `pi_torchreid.data.transforms` using a config-driven backend (`aug.backend: torchvision_v2`).
 
 - Basic train-time toggle list: `data.transforms`
   - Shortcut tokens stay lowercase: `random_crop`, `random_erase`, `random_patch`, `rand_augment`
@@ -335,11 +335,11 @@ Pretrained models are available in the [Model Zoo](https://kaiyangzhou.github.io
 
 ### Offline feature extraction
 
-`FeatureExtractor` is available from `torchreid.utils` and can reuse the same evaluation preprocessing as `ImageDataManager`.
+`FeatureExtractor` is available from `pi_torchreid.utils` and can reuse the same evaluation preprocessing as `ImageDataManager`.
 
 ```python
 from yacs.config import CfgNode as CN
-from torchreid.utils import FeatureExtractor
+from pi_torchreid.utils import FeatureExtractor
 
 cfg = CN()
 cfg.data = CN()

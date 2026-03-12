@@ -4,10 +4,10 @@ import numpy as np
 from PIL import Image
 import torch
 
+from pi_torchreid.data.datamanager import DataManager
+from pi_torchreid.data.transforms import build_transforms
+import pi_torchreid.utils.feature_extractor as feature_extractor_module
 from scripts.default_config import get_default_config
-from torchreid.data.datamanager import DataManager
-from torchreid.data.transforms import build_transforms
-import torchreid.utils.feature_extractor as feature_extractor_module
 
 
 def _make_cfg() -> object:

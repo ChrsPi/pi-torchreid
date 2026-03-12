@@ -1,5 +1,5 @@
 [project]
-name = "torchreid"
+name = "pi-torchreid"
 version = "1.4.0"
 description = "A library for deep learning person re-ID in PyTorch"
 readme = "README.md"
@@ -50,16 +50,16 @@ export = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/KaiyangZhou/deep-person-reid"
+Homepage = "https://github.com/ChrsPi/pi-torchreid"
 Documentation = "https://kaiyangzhou.github.io/deep-person-reid/"
-Repository = "https://github.com/KaiyangZhou/deep-person-reid"
+Repository = "https://github.com/ChrsPi/pi-torchreid"
 
 [build-system]
 requires = ["setuptools>=61", "wheel", "cython>=0.29", "numpy>=1.21"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["torchreid*"]
+include = ["pi_torchreid*"]
 
 [tool.ruff]
 line-length = 120
@@ -87,51 +87,51 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # Star imports and re-exports in package __init__.py (F403/F405/F401)
-"torchreid/__init__.py" = ["F401"]
-"torchreid/models/__init__.py" = ["F403", "F405", "F401"]
-"torchreid/data/__init__.py" = ["F403", "F405", "F401"]
-"torchreid/data/datasets/__init__.py" = ["F401"]
-"torchreid/data/datasets/image/__init__.py" = ["F403", "F405", "F401"]
-"torchreid/data/datasets/video/__init__.py" = ["F401"]
-"torchreid/utils/__init__.py" = ["F403", "F405", "F401", "I001"]
-"torchreid/engine/__init__.py" = ["F403", "F405", "F401"]
-"torchreid/engine/image/__init__.py" = ["F401"]
-"torchreid/engine/video/__init__.py" = ["F401"]
-"torchreid/losses/__init__.py" = ["F403", "F405", "N802", "F401"]
-"torchreid/metrics/__init__.py" = ["F403", "F405", "F401"]
-"torchreid/optim/__init__.py" = ["F401"]
+"pi_torchreid/__init__.py" = ["F401"]
+"pi_torchreid/models/__init__.py" = ["F403", "F405", "F401"]
+"pi_torchreid/data/__init__.py" = ["F403", "F405", "F401"]
+"pi_torchreid/data/datasets/__init__.py" = ["F401"]
+"pi_torchreid/data/datasets/image/__init__.py" = ["F403", "F405", "F401"]
+"pi_torchreid/data/datasets/video/__init__.py" = ["F401"]
+"pi_torchreid/utils/__init__.py" = ["F403", "F405", "F401", "I001"]
+"pi_torchreid/engine/__init__.py" = ["F403", "F405", "F401"]
+"pi_torchreid/engine/image/__init__.py" = ["F401"]
+"pi_torchreid/engine/video/__init__.py" = ["F401"]
+"pi_torchreid/losses/__init__.py" = ["F403", "F405", "N802", "F401"]
+"pi_torchreid/metrics/__init__.py" = ["F403", "F405", "F401"]
+"pi_torchreid/optim/__init__.py" = ["F401"]
 "projects/attribute_recognition/models/__init__.py" = ["F403", "F405"]
-"torchreid/utils/GPU-Re-Ranking/gnn_reranking.py" = ["F403", "F405", "N803"]
-"torchreid/utils/GPU-Re-Ranking/main.py" = ["F403", "F405"]
+"pi_torchreid/utils/GPU-Re-Ranking/gnn_reranking.py" = ["F403", "F405", "N803"]
+"pi_torchreid/utils/GPU-Re-Ranking/main.py" = ["F403", "F405"]
 # YACS CfgNode as CN (N817)
 "scripts/default_config.py" = ["N817"]
 "projects/DML/default_config.py" = ["N817"]
 "projects/OSNet_AIN/default_config.py" = ["N817"]
 # PyTorch convention: functional as F (N812)
-"torchreid/models/*.py" = ["N812"]
-"torchreid/engine/engine.py" = ["N812"]
-"torchreid/metrics/distance.py" = ["N812"]
+"pi_torchreid/models/*.py" = ["N812"]
+"pi_torchreid/engine/engine.py" = ["N812"]
+"pi_torchreid/metrics/distance.py" = ["N812"]
 "projects/DML/dml.py" = ["N812"]
 "projects/OSNet_AIN/osnet_child.py" = ["N812", "N803"]
 "projects/OSNet_AIN/osnet_search.py" = ["N812", "N803"]
 "projects/attribute_recognition/models/osnet.py" = ["N812"]
 "tools/visualize_actmap.py" = ["N812"]
 # Domain naming: argument/class/function (N803, N802, N801)
-"torchreid/models/osnet.py" = ["N803"]
-"torchreid/models/osnet_ain.py" = ["N803"]
-"torchreid/models/resnet_ibn_b.py" = ["N803"]
-"torchreid/models/inceptionresnetv2.py" = ["N801", "N803"]
-"torchreid/models/inceptionv4.py" = ["N801"]
+"pi_torchreid/models/osnet.py" = ["N803"]
+"pi_torchreid/models/osnet_ain.py" = ["N803"]
+"pi_torchreid/models/resnet_ibn_b.py" = ["N803"]
+"pi_torchreid/models/inceptionresnetv2.py" = ["N801", "N803"]
+"pi_torchreid/models/inceptionv4.py" = ["N801"]
 "tools/parse_test_res.py" = ["N803"]
-"torchreid/utils/GPU-Re-Ranking/utils.py" = ["N802"]
-"torchreid/utils/model_complexity.py" = ["N802"]
+"pi_torchreid/utils/GPU-Re-Ranking/utils.py" = ["N802"]
+"pi_torchreid/utils/model_complexity.py" = ["N802"]
 # Additional domain naming (dataset/API conventions)
-"torchreid/data/datasets/image/ilids.py" = ["N801"]
-"torchreid/data/datasets/video/ilidsvid.py" = ["N801"]
-"torchreid/utils/feature_extractor.py" = ["N812"]
+"pi_torchreid/data/datasets/image/ilids.py" = ["N801"]
+"pi_torchreid/data/datasets/video/ilidsvid.py" = ["N801"]
+"pi_torchreid/utils/feature_extractor.py" = ["N812"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["torchreid"]
+known-first-party = ["pi_torchreid"]
 force-single-line = false
 force-sort-within-sections = true
 

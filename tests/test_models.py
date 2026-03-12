@@ -5,7 +5,7 @@ import logging
 import pytest
 import torch
 
-from torchreid import models
+from pi_torchreid import models
 
 # Get all available models
 ALL_MODELS = list(models.__model_factory.keys())
@@ -88,7 +88,7 @@ class TestModelBuilding:
 
     def test_show_avai_models(self, caplog):
         """Test show_avai_models() function."""
-        with caplog.at_level(logging.INFO, logger="torchreid"):
+        with caplog.at_level(logging.INFO, logger="pi_torchreid"):
             models.show_avai_models()
         assert caplog.text
         # Check that some model names are in the output

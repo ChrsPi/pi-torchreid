@@ -1,9 +1,9 @@
 import torch
 from torch.nn import functional as F
 
-from torchreid.engine import Engine
-from torchreid.losses import CrossEntropyLoss, TripletLoss
-from torchreid.utils import open_all_layers, open_specified_layers
+from pi_torchreid.engine import Engine
+from pi_torchreid.losses import CrossEntropyLoss, TripletLoss
+from pi_torchreid.utils import open_all_layers, open_specified_layers
 
 
 class ImageDMLEngine(Engine):
@@ -88,9 +88,9 @@ class ImageDMLEngine(Engine):
             "loss1_x": loss1_x.item(),
             "loss1_t": loss1_t.item(),
             "loss1_ml": loss1_ml.item(),
-            "loss2_x": loss1_x.item(),
-            "loss2_t": loss1_t.item(),
-            "loss2_ml": loss1_ml.item(),
+            "loss2_x": loss2_x.item(),
+            "loss2_t": loss2_t.item(),
+            "loss2_ml": loss2_ml.item(),
         }
 
         return loss_dict

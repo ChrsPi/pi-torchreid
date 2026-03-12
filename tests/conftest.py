@@ -1,4 +1,4 @@
-"""Pytest fixtures and shared utilities for torchreid tests."""
+"""Pytest fixtures and shared utilities for pi_torchreid tests."""
 
 from pathlib import Path
 import random

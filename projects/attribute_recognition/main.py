@@ -12,9 +12,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-import torchreid
-from torchreid.data.transforms import build_transforms
-from torchreid.utils import (
+import pi_torchreid
+from pi_torchreid.data.transforms import build_transforms
+from pi_torchreid.utils import (
     AverageMeter,
     Logger,
     check_isfile,
@@ -127,8 +127,8 @@ def main():
         test(model, testloader, attr_dict, use_gpu)
         return
 
-    optimizer = torchreid.optim.build_optimizer(model, **optimizer_kwargs(args))
-    scheduler = torchreid.optim.build_lr_scheduler(optimizer, **lr_scheduler_kwargs(args))
+    optimizer = pi_torchreid.optim.build_optimizer(model, **optimizer_kwargs(args))
+    scheduler = pi_torchreid.optim.build_lr_scheduler(optimizer, **lr_scheduler_kwargs(args))
 
     start_epoch = args.start_epoch
     best_result = -np.inf

@@ -1,18 +1,18 @@
-.. _torchreid_optim:
+.. _pi_torchreid_optim:
 
-torchreid.optim
+pi_torchreid.optim
 =================
 
 
 Optimizer
 ----------
 
-.. automodule:: torchreid.optim.optimizer
+.. automodule:: pi_torchreid.optim.optimizer
     :members: build_optimizer
 
 
 LR Scheduler
 -------------
 
-.. automodule:: torchreid.optim.lr_scheduler
+.. automodule:: pi_torchreid.optim.lr_scheduler
     :members: build_lr_scheduler

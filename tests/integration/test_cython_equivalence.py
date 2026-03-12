@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from torchreid import metrics
+from pi_torchreid import metrics
 
 
 @pytest.mark.skipif(

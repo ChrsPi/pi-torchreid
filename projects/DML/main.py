@@ -15,8 +15,8 @@ from dml import ImageDMLEngine
 import torch
 import torch.nn as nn
 
-import torchreid
-from torchreid.utils import (
+import pi_torchreid
+from pi_torchreid.utils import (
     Logger,
     check_isfile,
     collect_env_info,
@@ -69,10 +69,10 @@ def main():
     if cfg.use_gpu:
         torch.backends.cudnn.benchmark = True
 
-    datamanager = torchreid.data.ImageDataManager(**imagedata_kwargs(cfg))
+    datamanager = pi_torchreid.data.ImageDataManager(**imagedata_kwargs(cfg))
 
     print(f"Building model-1: {cfg.model.name}")
-    model1 = torchreid.models.build_model(
+    model1 = pi_torchreid.models.build_model(
         name=cfg.model.name,
         num_classes=datamanager.num_train_pids,
         loss=cfg.loss.name,
@@ -95,11 +95,11 @@ def main():
         model1 = nn.DataParallel(model1).cuda()
         model2 = nn.DataParallel(model2).cuda()
 
-    optimizer1 = torchreid.optim.build_optimizer(model1, **optimizer_kwargs(cfg))
-    scheduler1 = torchreid.optim.build_lr_scheduler(optimizer1, **lr_scheduler_kwargs(cfg))
+    optimizer1 = pi_torchreid.optim.build_optimizer(model1, **optimizer_kwargs(cfg))
+    scheduler1 = pi_torchreid.optim.build_lr_scheduler(optimizer1, **lr_scheduler_kwargs(cfg))
 
-    optimizer2 = torchreid.optim.build_optimizer(model2, **optimizer_kwargs(cfg))
-    scheduler2 = torchreid.optim.build_lr_scheduler(optimizer2, **lr_scheduler_kwargs(cfg))
+    optimizer2 = pi_torchreid.optim.build_optimizer(model2, **optimizer_kwargs(cfg))
+    scheduler2 = pi_torchreid.optim.build_lr_scheduler(optimizer2, **lr_scheduler_kwargs(cfg))
 
     if cfg.model.resume1 and check_isfile(cfg.model.resume1):
         cfg.train.start_epoch = resume_from_checkpoint(

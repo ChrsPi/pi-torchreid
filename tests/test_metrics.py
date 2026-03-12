@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from torchreid import metrics
+from pi_torchreid import metrics
 
 
 class TestEvaluateRank:

@@ -14,8 +14,8 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
-import torchreid
-from torchreid.utils import check_isfile, load_pretrained_weights, mkdir_if_missing
+import pi_torchreid
+from pi_torchreid.utils import check_isfile, load_pretrained_weights, mkdir_if_missing
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
@@ -120,7 +120,7 @@ def main():
 
     use_gpu = torch.cuda.is_available()
 
-    datamanager = torchreid.data.ImageDataManager(
+    datamanager = pi_torchreid.data.ImageDataManager(
         root=args.root,
         sources=args.dataset,
         height=args.height,
@@ -132,7 +132,7 @@ def main():
     )
     test_loader = datamanager.test_loader
 
-    model = torchreid.models.build_model(name=args.model, num_classes=datamanager.num_train_pids, use_gpu=use_gpu)
+    model = pi_torchreid.models.build_model(name=args.model, num_classes=datamanager.num_train_pids, use_gpu=use_gpu)
 
     if use_gpu:
         model = model.cuda()

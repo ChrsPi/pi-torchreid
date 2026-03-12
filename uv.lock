@@ -2257,7 +2257,7 @@ wheels = [
 ]
 
 [[package]]
-name = "torchreid"
+name = "pi-torchreid"
 version = "1.4.0"
 source = { editable = "." }
 dependencies = [
