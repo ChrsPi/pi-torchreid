@@ -39,13 +39,15 @@ Configure augmentation
 The augmentation stack is configured through ``data.*`` and ``aug.*`` and built by the torchvision v2 backend.
 
 - Train-time transform names: ``data.transforms``
-  - Supported names: ``random_flip``, ``random_crop``, ``color_jitter``, ``random_erase``, ``random_patch``, ``rand_augment``
+  - Shortcut tokens stay lowercase: ``random_crop``, ``random_erase``, ``random_patch``, ``rand_augment``
+  - Torchvision v2 passthrough transforms use PascalCase, e.g. ``RandomHorizontalFlip`` and ``ColorJitter``
+  - Legacy aliases ``random_flip`` and ``color_jitter`` are still accepted for migration, but new configs should use the canonical names above
 - Detailed train params: ``aug.train.<name>.*``
 - Evaluation degradations: ``aug.test.<name>.*`` (supported names: ``jpeg``, ``resolution``, ``gaussian_blur``, ``gaussian_noise``, ``grayscale``, ``rotation``, ``brightness``, ``contrast``)
 
 Important behavior:
 
-- ``data.transforms=[]`` disables stochastic train transforms (no implicit fallback to ``random_flip``).
+- ``data.transforms=[]`` disables stochastic train transforms (no implicit fallback to ``RandomHorizontalFlip``).
 - ``aug.disable_stochastic=True`` disables stochastic train transforms even when listed in ``data.transforms``.
 - ``data.norm_mean`` and ``data.norm_std`` are final normalization values and override ``aug.normalize.mean/std``.
 
@@ -377,3 +379,32 @@ We have provided a simple API for feature extraction, which accepts input of var
 
     features = extractor(image_list)
     print(features.shape) # output (5, 512)
+
+To reuse the same evaluation preprocessing as ``ImageDataManager``, pass the training config directly:
+
+.. code-block:: python
+
+    from yacs.config import CfgNode as CN
+    from torchreid.utils import FeatureExtractor
+
+    cfg = CN()
+    cfg.data = CN()
+    cfg.data.height = 256
+    cfg.data.width = 128
+    cfg.data.norm_mean = [0.485, 0.456, 0.406]
+    cfg.data.norm_std = [0.229, 0.224, 0.225]
+    cfg.aug = CN()
+    cfg.aug.backend = "torchvision_v2"
+    cfg.aug.seed = None
+    cfg.aug.disable_stochastic = False
+    cfg.aug.test = CN()
+    cfg.aug.test.brightness = CN()
+    cfg.aug.test.brightness.enabled = True
+    cfg.aug.test.brightness.factor = 0.7
+
+    extractor = FeatureExtractor(
+        model_name='osnet_x1_0',
+        model_path='a/b/c/model.pth.tar',
+        cfg=cfg,
+        device='cuda'
+    )

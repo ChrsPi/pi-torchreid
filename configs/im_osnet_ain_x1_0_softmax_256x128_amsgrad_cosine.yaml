@@ -9,7 +9,7 @@ data:
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip', 'color_jitter']
+  transforms: ['RandomHorizontalFlip', 'ColorJitter']
   save_dir: 'log/osnet_ain_x1_0_market1501_softmax_cosinelr'
 
 loss:

@@ -45,7 +45,7 @@ class University1652(ImageDataset):
         width=256,
         batch_size_train=32,
         batch_size_test=100,
-        transforms=['random_flip', 'random_crop']
+        transforms=['RandomHorizontalFlip', 'random_crop']
     )
     """
 

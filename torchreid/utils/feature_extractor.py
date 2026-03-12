@@ -1,13 +1,29 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 import numpy as np
 from PIL import Image
 import torch
 import torchvision.transforms as T
 
+from torchreid.data.transforms import build_transforms
 from torchreid.models import build_model
 from torchreid.utils import check_isfile, compute_model_complexity, load_pretrained_weights
 from torchreid.utils.logging_config import logger
+
+
+def _resolve_image_size(image_size: Sequence[int] | int, cfg: object | None) -> tuple[int, int]:
+    """Prefer cfg-provided dimensions when available."""
+    if isinstance(image_size, int):
+        resolved_size = (image_size, image_size)
+    else:
+        resolved_size = (int(image_size[0]), int(image_size[1]))
+
+    data_cfg = getattr(cfg, "data", None)
+    height = getattr(data_cfg, "height", None)
+    width = getattr(data_cfg, "width", None)
+    if height is None or width is None:
+        return resolved_size
+    return int(height), int(width)
 
 
 class FeatureExtractor:
@@ -31,6 +47,9 @@ class FeatureExtractor:
         pixel_mean (list): pixel mean for normalization.
         pixel_std (list): pixel std for normalization.
         pixel_norm (bool): whether to normalize pixels.
+        cfg: optional config object used to build the shared evaluation transform.
+        preprocess: optional prebuilt preprocessing callable. If provided, it
+            overrides ``cfg`` and the simple built-in resize/normalize path.
         device (str): 'cpu' or 'cuda' (could be specific gpu devices).
         verbose (bool): show model details.
 
@@ -64,6 +83,8 @@ class FeatureExtractor:
         pixel_mean: Sequence[float] | None = None,
         pixel_std: Sequence[float] | None = None,
         pixel_norm: bool = True,
+        cfg: object | None = None,
+        preprocess: Callable | None = None,
         device: str = "cuda",
         verbose: bool = True,
     ) -> None:
@@ -80,8 +101,13 @@ class FeatureExtractor:
         )
         model.eval()
 
+        effective_image_size = _resolve_image_size(image_size, cfg)
+
         if verbose:
-            num_params, flops = compute_model_complexity(model, (1, 3, image_size[0], image_size[1]))
+            num_params, flops = compute_model_complexity(
+                model,
+                (1, 3, effective_image_size[0], effective_image_size[1]),
+            )
             logger.info("Model: %s", model_name)
             logger.info("- params: %s", f"{num_params:,}")
             logger.info("- flops: %s", f"{flops:,}")
@@ -89,13 +115,23 @@ class FeatureExtractor:
         if model_path and check_isfile(model_path):
             load_pretrained_weights(model, model_path)
 
-        # Build transform functions
-        transforms = []
-        transforms += [T.Resize(image_size)]
-        transforms += [T.ToTensor()]
-        if pixel_norm:
-            transforms += [T.Normalize(mean=pixel_mean, std=pixel_std)]
-        preprocess = T.Compose(transforms)
+        # Reuse the shared evaluation pipeline when cfg is provided; otherwise keep
+        # the historical simple preprocessing behavior.
+        if preprocess is None and cfg is not None:
+            _, preprocess = build_transforms(
+                effective_image_size[0],
+                effective_image_size[1],
+                norm_mean=pixel_mean,
+                norm_std=pixel_std,
+                cfg=cfg,
+            )
+        if preprocess is None:
+            transforms = []
+            transforms += [T.Resize(effective_image_size)]
+            transforms += [T.ToTensor()]
+            if pixel_norm:
+                transforms += [T.Normalize(mean=pixel_mean, std=pixel_std)]
+            preprocess = T.Compose(transforms)
 
         to_pil = T.ToPILImage()
 

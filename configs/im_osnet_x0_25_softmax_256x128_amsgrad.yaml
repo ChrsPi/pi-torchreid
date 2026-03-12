@@ -9,7 +9,7 @@ data:
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip']
+  transforms: ['RandomHorizontalFlip']
   save_dir: 'log/osnet_x0_25_market1501_softmax'
 
 loss:

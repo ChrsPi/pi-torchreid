@@ -336,6 +336,27 @@ class TestV2Passthrough:
 class TestTransformValidation:
     """Tests for transform name validation."""
 
+    def test_legacy_aliases_are_accepted_for_direct_transforms(self):
+        """Legacy aliases should map to canonical transform names."""
+        from torchvision.transforms import v2
+
+        transform_tr, _ = build_transforms(256, 128, transforms=["random_flip", "color_jitter"])
+
+        assert any(isinstance(t, v2.RandomHorizontalFlip) for t in transform_tr.transforms)
+        assert any(isinstance(t, v2.ColorJitter) for t in transform_tr.transforms)
+
+    def test_legacy_aliases_are_accepted_from_cfg(self):
+        """Legacy aliases in cfg.data.transforms should still build successfully."""
+        from torchvision.transforms import v2
+
+        cfg = _make_test_cfg()
+        cfg.data.transforms = ["random_flip", "color_jitter"]
+
+        transform_tr, _ = build_transforms(256, 128, cfg=cfg)
+
+        assert any(isinstance(t, v2.RandomHorizontalFlip) for t in transform_tr.transforms)
+        assert any(isinstance(t, v2.ColorJitter) for t in transform_tr.transforms)
+
     def test_unknown_token_raises_error(self):
         """Unknown transform name raises ValueError."""
         with pytest.raises(ValueError, match="Unknown transform.*'bogus_transform'"):

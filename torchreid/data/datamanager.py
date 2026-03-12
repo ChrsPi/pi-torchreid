@@ -18,7 +18,7 @@ class DataManager:
         height (int, optional): target image height. Default is 256.
         width (int, optional): target image width. Default is 128.
         transforms (str or list of str, optional): transformations applied to model training.
-            Default is 'random_flip'.
+            Default is 'RandomHorizontalFlip'.
         norm_mean (list or None, optional): data mean. Default is None (use imagenet mean).
         norm_std (list or None, optional): data std. Default is None (use imagenet std).
         use_gpu (bool, optional): use gpu. Default is True.
@@ -31,7 +31,7 @@ class DataManager:
         targets: str | Sequence[str] | None = None,
         height: int = 256,
         width: int = 128,
-        transforms: str | Sequence[str] = "random_flip",
+        transforms: str | Sequence[str] = "RandomHorizontalFlip",
         norm_mean: Sequence[float] | None = None,
         norm_std: Sequence[float] | None = None,
         use_gpu: bool = False,
@@ -102,7 +102,7 @@ class ImageDataManager(DataManager):
         height (int, optional): target image height. Default is 256.
         width (int, optional): target image width. Default is 128.
         transforms (str or list of str, optional): transformations applied to model training.
-            Default is 'random_flip'.
+            Default is 'RandomHorizontalFlip'.
         k_tfm (int): number of times to apply augmentation to an image
             independently. If k_tfm > 1, the transform function will be
             applied k_tfm times to an image. This variable will only be
@@ -163,7 +163,7 @@ class ImageDataManager(DataManager):
         targets: str | Sequence[str] | None = None,
         height: int = 256,
         width: int = 128,
-        transforms: str | Sequence[str] = "random_flip",
+        transforms: str | Sequence[str] = "RandomHorizontalFlip",
         k_tfm: int = 1,
         norm_mean: Sequence[float] | None = None,
         norm_std: Sequence[float] | None = None,
@@ -351,7 +351,7 @@ class VideoDataManager(DataManager):
         height (int, optional): target image height. Default is 256.
         width (int, optional): target image width. Default is 128.
         transforms (str or list of str, optional): transformations applied to model training.
-            Default is 'random_flip'.
+            Default is 'RandomHorizontalFlip'.
         norm_mean (list or None, optional): data mean. Default is None (use imagenet mean).
         norm_std (list or None, optional): data std. Default is None (use imagenet std).
         use_gpu (bool, optional): use gpu. Default is True.
@@ -409,7 +409,7 @@ class VideoDataManager(DataManager):
         targets: str | Sequence[str] | None = None,
         height: int = 256,
         width: int = 128,
-        transforms: str | Sequence[str] = "random_flip",
+        transforms: str | Sequence[str] = "RandomHorizontalFlip",
         norm_mean: Sequence[float] | None = None,
         norm_std: Sequence[float] | None = None,
         use_gpu: bool = True,

@@ -13,6 +13,7 @@ from torchreid.data.transforms.augmentations import (
     ResolutionDegradation,
 )
 from torchreid.data.transforms.backends import get_backend
+from torchreid.data.transforms.names import canonicalize_transform_list
 
 
 def _build_effective_config(
@@ -24,6 +25,8 @@ def _build_effective_config(
     cfg: Any | None,
 ) -> Any:
     """Build a config object the backend can read. Merge cfg with explicit args."""
+    canonical_transforms = canonicalize_transform_list(transforms)
+
     if cfg is not None and hasattr(cfg, "data"):
         # Use existing cfg; ensure data has required fields from args
         if not getattr(cfg.data, "height", None):
@@ -31,7 +34,7 @@ def _build_effective_config(
         if not getattr(cfg.data, "width", None):
             cfg.data.width = width
         if not hasattr(cfg.data, "transforms") or cfg.data.transforms is None:
-            cfg.data.transforms = transforms if transforms is not None else []
+            cfg.data.transforms = canonical_transforms
         existing_norm_mean = getattr(cfg.data, "norm_mean", None)
         if norm_mean is not None and not existing_norm_mean:
             cfg.data.norm_mean = list(norm_mean)
@@ -57,10 +60,7 @@ def _build_effective_config(
     effective.data = CN()
     effective.data.height = height
     effective.data.width = width
-    if transforms is None:
-        effective.data.transforms = []
-    else:
-        effective.data.transforms = [transforms] if isinstance(transforms, str) else list(transforms)
+    effective.data.transforms = canonical_transforms
     effective.data.norm_mean = list(norm_mean) if norm_mean is not None else [0.485, 0.456, 0.406]
     effective.data.norm_std = list(norm_std) if norm_std is not None else [0.229, 0.224, 0.225]
     effective.aug = CN()
@@ -117,7 +117,8 @@ def build_transforms(
         width: Target image width.
         transforms: Transform names for training. Use v2 class names (PascalCase,
             e.g. 'RandomHorizontalFlip') or shortcut tokens (random_crop, random_patch,
-            rand_augment, random_erase). Default None (no augmentation).
+            rand_augment, random_erase). Legacy aliases 'random_flip' and
+            'color_jitter' are also accepted. Default None (no augmentation).
         norm_mean: Normalization mean (default ImageNet).
         norm_std: Normalization std (default ImageNet).
         cfg: Optional full config with aug.* and data.*. If provided, backend and
@@ -135,11 +136,7 @@ def build_transforms(
         existing_norm_mean = getattr(getattr(cfg, "data", None), "norm_mean", None) if cfg is not None else None
         if not existing_norm_mean:
             norm_mean = [0.485, 0.456, 0.406]
-    if transforms is None:
-        transforms = []
-    if isinstance(transforms, str):
-        transforms = [transforms]
-    if not isinstance(transforms, (list, tuple)):
+    if transforms is not None and not isinstance(transforms, (str, list, tuple)):
         raise ValueError(f"transforms must be a list of strings, got {type(transforms)}")
 
     effective_cfg = _build_effective_config(height, width, transforms, norm_mean, norm_std, cfg)

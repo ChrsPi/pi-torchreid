@@ -9,7 +9,7 @@ data:
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip', 'random_erase']  # optional: random_crop, color_jitter, random_patch, rand_augment
+  transforms: ['RandomHorizontalFlip', 'random_erase']  # optional: random_crop, ColorJitter, random_patch, rand_augment
   save_dir: 'log/osnet_x1_0_market1501_softmax_cosinelr'
 
 # Augmentation (torchvision v2). Omit to use defaults from data.transforms above.
