@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from pathlib import Path
 
 from setuptools import Extension, setup
@@ -29,16 +30,32 @@ def optional_extension_message(exc: Exception) -> str:
     )
 
 
+def missing_extension_source_message(source_path: Path) -> str:
+    return (
+        "Skipping the optional rank_cy extension because the generated C source is missing: "
+        f"{source_path}. "
+        "Set PI_TORCHREID_USE_CYTHON=1 to build from rank_cy.pyx or "
+        "PI_TORCHREID_FORCE_EXT=1 to make this a hard failure."
+    )
+
+
 def build_rank_extension() -> list[Extension]:
     if env_flag("PI_TORCHREID_DISABLE_EXT"):
         return []
 
+    force_ext = env_flag("PI_TORCHREID_FORCE_EXT")
+    use_cython = env_flag("PI_TORCHREID_USE_CYTHON")
+
     import numpy as np
 
-    source_path = RANK_CYTHON_SOURCE if env_flag("PI_TORCHREID_USE_CYTHON") else RANK_C_SOURCE
-    source_path_rel = RANK_CYTHON_SOURCE_REL if env_flag("PI_TORCHREID_USE_CYTHON") else RANK_C_SOURCE_REL
+    source_path = RANK_CYTHON_SOURCE if use_cython else RANK_C_SOURCE
+    source_path_rel = RANK_CYTHON_SOURCE_REL if use_cython else RANK_C_SOURCE_REL
     if not source_path.exists():
-        raise FileNotFoundError(f"Missing extension source: {source_path}")
+        if force_ext or use_cython:
+            raise FileNotFoundError(f"Missing extension source: {source_path}")
+
+        warnings.warn(missing_extension_source_message(source_path), stacklevel=2)
+        return []
 
     extension = Extension(
         RANK_EXTENSION_NAME,
@@ -46,7 +63,7 @@ def build_rank_extension() -> list[Extension]:
         include_dirs=[np.get_include()],
     )
 
-    if env_flag("PI_TORCHREID_USE_CYTHON"):
+    if use_cython:
         try:
             from Cython.Build import cythonize
         except ImportError as exc:
