@@ -53,6 +53,7 @@ class TestCythonPythonEquivalence:
         for i in range(min(10, num_q)):
             q_pids[i] = g_pids[i % num_g]
 
+        np.random.seed(42)
         cmc_py, mAP_py = metrics.evaluate_rank(
             distmat,
             q_pids,
@@ -63,6 +64,7 @@ class TestCythonPythonEquivalence:
             use_metric_cuhk03=True,
             use_cython=False,
         )
+        np.random.seed(42)
         cmc_cy, mAP_cy = metrics.evaluate_rank(
             distmat,
             q_pids,

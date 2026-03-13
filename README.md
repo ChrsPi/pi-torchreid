@@ -101,6 +101,23 @@ source .venv/bin/activate  # On Linux/Mac
 uv run python -c "import pi_torchreid; print(pi_torchreid.__version__)"
 ```
 
+### Optional Cython acceleration
+
+`pi-torchreid` will try to build the optional `rank_cy` extension during installation when a compiler is available. If that build fails, installation continues with the pure-Python ranking fallback.
+
+```bash
+# Skip the extension build completely
+PI_TORCHREID_DISABLE_EXT=1 uv sync
+
+# Require the extension build to succeed
+PI_TORCHREID_FORCE_EXT=1 uv build
+
+# Regenerate the extension from rank_cy.pyx (maintainer workflow)
+PI_TORCHREID_USE_CYTHON=1 python setup.py build_ext --inplace
+```
+
+This only affects evaluation speed in `pi_torchreid.metrics.evaluate_rank`; correctness is unchanged when the extension is unavailable.
+
 ### Docker
 
 Another way to install is to run everything inside docker container:

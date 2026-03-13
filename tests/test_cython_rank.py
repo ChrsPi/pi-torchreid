@@ -37,6 +37,7 @@ def test_cython_rank_precision():
     np.testing.assert_allclose(mAP_py, mAP_cy, rtol=1e-5, atol=1e-6)
 
     # Test CUHK03 metric
+    np.random.seed(42)
     cmc_py, mAP_py = metrics.evaluate_rank(
         distmat,
         q_pids,
@@ -47,6 +48,7 @@ def test_cython_rank_precision():
         use_metric_cuhk03=True,
         use_cython=False,
     )
+    np.random.seed(42)
     cmc_cy, mAP_cy = metrics.evaluate_rank(
         distmat,
         q_pids,

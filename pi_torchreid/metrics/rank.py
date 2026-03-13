@@ -203,9 +203,9 @@ def evaluate_rank(
         max_rank (int, optional): maximum CMC rank to be computed. Default is 50.
         use_metric_cuhk03 (bool, optional): use single-gallery-shot setting for cuhk03.
             Default is False. This should be enabled when using cuhk03 classic split.
-        use_cython (bool, optional): use cython code for evaluation. Default is True.
-            This is highly recommended as the cython code can speed up the cmc computation
-            by more than 10x. This requires Cython to be installed.
+        use_cython (bool, optional): use the optional compiled evaluation code. Default is True.
+            This is highly recommended as it can speed up the cmc computation
+            by more than 10x when the extension is available.
     """
     if use_cython and IS_CYTHON_AVAI:
         return evaluate_cy(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03)

@@ -5,6 +5,7 @@ import pytest
 import torch
 
 from pi_torchreid import metrics
+from pi_torchreid.metrics import rank as rank_module
 
 
 class TestEvaluateRank:
@@ -110,6 +111,26 @@ class TestEvaluateRank:
         cmc, mAP = metrics.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=10, use_cython=False)
         # Should adjust max_rank to gallery size
         assert len(cmc) <= num_g
+
+    def test_evaluate_rank_falls_back_when_extension_unavailable(self, monkeypatch):
+        """Test that use_cython=True falls back to Python when the extension is unavailable."""
+        distmat = np.array([[0.0, 1.0], [1.0, 0.0]], dtype=np.float32)
+        q_pids = np.array([0, 1])
+        g_pids = np.array([0, 1])
+        q_camids = np.array([0, 0])
+        g_camids = np.array([1, 1])
+
+        monkeypatch.setattr(rank_module, "IS_CYTHON_AVAI", False)
+
+        cmc_py, mAP_py = rank_module.evaluate_rank(
+            distmat, q_pids, g_pids, q_camids, g_camids, max_rank=2, use_cython=False
+        )
+        cmc_fallback, mAP_fallback = rank_module.evaluate_rank(
+            distmat, q_pids, g_pids, q_camids, g_camids, max_rank=2, use_cython=True
+        )
+
+        np.testing.assert_allclose(cmc_fallback, cmc_py)
+        assert mAP_fallback == pytest.approx(mAP_py)
 
 
 class TestAccuracy:
